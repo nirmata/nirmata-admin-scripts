@@ -1,0 +1,22 @@
+# Nirmata Admin Scripts
+
+This repository contains essential administrative scripts and utilities for Nirmata platform management.
+
+## Contents
+
+### Scripts
+
+- **nirmata_test.sh** - Comprehensive health check and testing script for Nirmata environments
+
+### Directories
+
+- **ndp_application_migration/** - Scripts and utilities for migrating applications in NDP (Nirmata DevSecOps Platform)
+- **environment_permissions/** - Scripts for managing and checking environment permissions
+
+## Usage
+
+Each script and directory contains its own documentation. Please refer to individual README files where available for specific usage instructions.
+
+## Contributing
+
+Please follow standard practices when contributing to this repository and ensure all scripts are tested before submission. 
