@@ -7,6 +7,8 @@ This repository contains essential administrative scripts and utilities for Nirm
 ### Scripts
 
 - **nirmata_test.sh** - Comprehensive health check and testing script for Nirmata environments
+- **cleanup-cluster.sh** - Script to clean up Kubernetes clusters
+- **cleanup-cluster-agent.sh** - Script to clean up Nirmata cluster agents
 
 ### Directories
 
