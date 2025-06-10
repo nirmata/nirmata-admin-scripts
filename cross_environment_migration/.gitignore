@@ -1,0 +1,17 @@
+# Ignore local configuration files with real API tokens
+migration_config_local.sh
+*_local.sh
+
+# Ignore log files
+logs/
+*.log
+
+# Ignore temporary files
+*.tmp
+*.temp
+.DS_Store
+
+# Ignore backup files
+*.bak
+*.backup
+*~ 
