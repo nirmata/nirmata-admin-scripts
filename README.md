@@ -15,6 +15,7 @@ This repository contains essential administrative scripts and utilities for Nirm
 - **ndp_application_migration/** - Scripts and utilities for migrating applications in NDP (Nirmata DevSecOps Platform)
 - **environment_permissions/** - Scripts for managing and checking environment permissions
 - **backup-restore/** - Scripts for backup and restore operations of Nirmata components
+- **validate-kyverno/** - Scripts and utilities for validating Kyverno policies and health checks
 
 ## Usage
 

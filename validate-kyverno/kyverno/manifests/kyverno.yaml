@@ -1,0 +1,657 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "3"
+    creationTimestamp: "2023-05-31T08:55:37Z"
+    generation: 3
+    labels:
+      app: kyverno
+      app.kubernetes.io/component: kyverno
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: kyverno
+      app.kubernetes.io/part-of: kyverno
+      app.kubernetes.io/version: 1.6.2
+      helm.sh/chart: kyverno-1.6.2
+    name: kyverno
+    namespace: kyverno
+    resourceVersion: "453491908"
+    uid: c9f0dc6b-1e46-4f38-be08-9712e47466c4
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 3
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/instance: kyverno
+        app.kubernetes.io/name: kyverno
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 40%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: kyverno
+          app.kubernetes.io/component: kyverno
+          app.kubernetes.io/instance: kyverno
+          app.kubernetes.io/managed-by: Helm
+          app.kubernetes.io/name: kyverno
+          app.kubernetes.io/part-of: kyverno
+          app.kubernetes.io/version: 1.6.2
+          helm.sh/chart: kyverno-1.6.2
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                    - kyverno
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        containers:
+        - args:
+          - -deployment-name=kyverno
+          - -namespace=kyverno
+          - -product-name=Policy Manager Enterprise
+          - -validate-interval=60
+          - -license-key=IZQQf9NjIhQpronDFawwigDAY/G0y+wViBLCNiZDW8kibsx6QV0dCkLAYykIbIEEsgtRpe8LZAN0XcPGbmyre90S/iQBQoPkCu0F7DTEQZGC+BwA1QwGa612fFXcEKNIV5vbds2UIHSadFACpDERiPVMi7GOAcj8pd5+OGB8lQMNATPxV51unb+E9ays0oaNFbniNb+ycmP54V0ObuRtsNiYAIUXyIPx+AlqwFh7qpiscU1fRx2ZCGvnFihKEIo3LhQODy3gm2laiVQCcDxmf81qSzVFgoiLfRUN4svopy4Xup4hIAIFbWQJ8DmvzLuZ1SbFf391XC8MYnvgSt91yy39+P0jDV/MTgFUD/9B+1KU0XZ3t4RfRtyoy2Kkspa7
+          - -run-type=sidecar
+          - -call-home-server=nirmata.io
+          - -api-key=COmVzvNbhTvuj78/RR7yJiJvQpwYPD59hq0c8HfVCY16XuR/thQlU2yqEgQWPn+GdhFY4kfq/pZx5hLVfGbb2g==
+          - -cluster-id=2f1f23d9-23f6-44a6-a267-0f3a271a2aa4
+          - -cluster-name=eks-production
+          image: ghcr.io/nirmata/kyverno-license-manager:v0.0.2
+          imagePullPolicy: Always
+          name: n4k-lm
+          resources: {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        - args:
+          - --loggingFormat=text
+          - --exceptionNamespace=kyverno
+          env:
+          - name: INIT_CONFIG
+            value: kyverno
+          - name: METRICS_CONFIG
+            value: kyverno-metrics
+          - name: KYVERNO_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: KYVERNO_POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: KYVERNO_SERVICEACCOUNT_NAME
+            value: kyverno
+          - name: KYVERNO_SVC
+            value: kyverno-svc
+          - name: TUF_ROOT
+            value: /.sigstore
+          - name: KYVERNO_DEPLOYMENT
+            value: kyverno
+          image: ghcr.io/nirmata/kyverno:v1.9.2-n4k.nirmata.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: /health/liveness
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: kyverno
+          ports:
+          - containerPort: 9443
+            name: https
+            protocol: TCP
+          - containerPort: 8000
+            name: metrics-port
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /health/readiness
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              memory: 384Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          startupProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /health/liveness
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 2
+            periodSeconds: 6
+            successThreshold: 1
+            timeoutSeconds: 1
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /.sigstore
+            name: sigstore
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: image-pull-secret
+        initContainers:
+        - args:
+          - --loggingFormat=text
+          env:
+          - name: METRICS_CONFIG
+            value: kyverno-metrics
+          - name: KYVERNO_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: KYVERNO_POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: KYVERNO_DEPLOYMENT
+            value: kyverno
+          image: ghcr.io/nirmata/kyvernopre:v1.9.2-n4k.nirmata.1
+          imagePullPolicy: IfNotPresent
+          name: kyverno-pre
+          resources:
+            limits:
+              cpu: 100m
+              memory: 256Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        - args:
+          - -deployment-name=kyverno
+          - -namespace=kyverno
+          - -product-name=Policy Manager Enterprise
+          - -license-key=IZQQf9NjIhQpronDFawwigDAY/G0y+wViBLCNiZDW8kibsx6QV0dCkLAYykIbIEEsgtRpe8LZAN0XcPGbmyre90S/iQBQoPkCu0F7DTEQZGC+BwA1QwGa612fFXcEKNIV5vbds2UIHSadFACpDERiPVMi7GOAcj8pd5+OGB8lQMNATPxV51unb+E9ays0oaNFbniNb+ycmP54V0ObuRtsNiYAIUXyIPx+AlqwFh7qpiscU1fRx2ZCGvnFihKEIo3LhQODy3gm2laiVQCcDxmf81qSzVFgoiLfRUN4svopy4Xup4hIAIFbWQJ8DmvzLuZ1SbFf391XC8MYnvgSt91yy39+P0jDV/MTgFUD/9B+1KU0XZ3t4RfRtyoy2Kkspa7
+          - -run-type=init-container
+          - -call-home-server=nirmata.io
+          - -api-key=COmVzvNbhTvuj78/RR7yJiJvQpwYPD59hq0c8HfVCY16XuR/thQlU2yqEgQWPn+GdhFY4kfq/pZx5hLVfGbb2g==
+          - -cluster-id=2f1f23d9-23f6-44a6-a267-0f3a271a2aa4
+          - -cluster-name=eks-production
+          image: ghcr.io/nirmata/kyverno-license-manager:v0.0.2
+          imagePullPolicy: Always
+          name: n4k-lm-init
+          resources: {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: kyverno
+        serviceAccountName: kyverno
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: sigstore
+  status:
+    availableReplicas: 3
+    conditions:
+    - lastTransitionTime: "2023-05-31T09:08:45Z"
+      lastUpdateTime: "2023-05-31T09:08:45Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2023-05-31T09:07:55Z"
+      lastUpdateTime: "2023-05-31T09:13:36Z"
+      message: ReplicaSet "kyverno-55d799bb47" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 3
+    readyReplicas: 3
+    replicas: 3
+    updatedReplicas: 3
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "3"
+    creationTimestamp: "2023-05-31T08:55:37Z"
+    generation: 3
+    labels:
+      app.kubernetes.io/component: cleanup-controller
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: kyverno-cleanup-controller
+      app.kubernetes.io/part-of: kyverno
+      app.kubernetes.io/version: 1.6.2
+      helm.sh/chart: kyverno-1.6.2
+    name: kyverno-cleanup-controller
+    namespace: kyverno
+    resourceVersion: "453491909"
+    uid: 7350f2de-3d54-41a5-8501-a5ca5ffaa92f
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: cleanup-controller
+        app.kubernetes.io/instance: kyverno
+        app.kubernetes.io/name: kyverno-cleanup-controller
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 40%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app.kubernetes.io/component: cleanup-controller
+          app.kubernetes.io/instance: kyverno
+          app.kubernetes.io/managed-by: Helm
+          app.kubernetes.io/name: kyverno-cleanup-controller
+          app.kubernetes.io/part-of: kyverno
+          app.kubernetes.io/version: 1.6.2
+          helm.sh/chart: kyverno-1.6.2
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                    - cleanup-controller
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        containers:
+        - args:
+          - --loggingFormat=text
+          - --disableMetrics=false
+          - --otelConfig=prometheus
+          - --metricsPort=8000
+          env:
+          - name: METRICS_CONFIG
+            value: kyverno-metrics
+          - name: KYVERNO_POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: KYVERNO_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: KYVERNO_SVC
+            value: kyverno-cleanup-controller
+          image: ghcr.io/nirmata/cleanup-controller:v1.9.2-n4k.nirmata.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: /health/liveness
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: controller
+          ports:
+          - containerPort: 9443
+            name: https
+            protocol: TCP
+          - containerPort: 8000
+            name: metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /health/readiness
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          startupProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /health/liveness
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 2
+            periodSeconds: 6
+            successThreshold: 1
+            timeoutSeconds: 1
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: kyverno-cleanup-controller
+        serviceAccountName: kyverno-cleanup-controller
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2023-05-31T09:08:07Z"
+      lastUpdateTime: "2023-05-31T09:08:07Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2023-05-31T09:07:55Z"
+      lastUpdateTime: "2023-05-31T09:12:44Z"
+      message: ReplicaSet "kyverno-cleanup-controller-5b8c57465" has successfully
+        progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 3
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: "2023-05-31T08:55:37Z"
+    labels:
+      app.kubernetes.io/component: cleanup-controller
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: kyverno-cleanup-controller
+      app.kubernetes.io/part-of: kyverno
+      app.kubernetes.io/version: 1.6.2
+      helm.sh/chart: kyverno-1.6.2
+    name: kyverno-cleanup-controller
+    namespace: kyverno
+    resourceVersion: "450336651"
+    uid: bff81349-5e80-4828-984f-9be26a175c1a
+  spec:
+    clusterIP: 172.20.218.125
+    clusterIPs:
+    - 172.20.218.125
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: https
+    selector:
+      app.kubernetes.io/component: cleanup-controller
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/name: kyverno-cleanup-controller
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: "2023-05-31T08:55:37Z"
+    labels:
+      app.kubernetes.io/component: cleanup-controller
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: kyverno-cleanup-controller
+      app.kubernetes.io/part-of: kyverno
+      app.kubernetes.io/version: 1.6.2
+      helm.sh/chart: kyverno-1.6.2
+    name: kyverno-cleanup-controller-metrics
+    namespace: kyverno
+    resourceVersion: "450336656"
+    uid: 62752c75-6a9a-45aa-9377-6eeafeb7287c
+  spec:
+    clusterIP: 172.20.156.73
+    clusterIPs:
+    - 172.20.156.73
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: metrics-port
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+    selector:
+      app.kubernetes.io/component: cleanup-controller
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/name: kyverno-cleanup-controller
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: "2023-05-31T08:55:37Z"
+    labels:
+      app: kyverno
+      app.kubernetes.io/component: kyverno
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: kyverno
+      app.kubernetes.io/part-of: kyverno
+      app.kubernetes.io/version: 1.6.2
+      helm.sh/chart: kyverno-1.6.2
+    name: kyverno-svc
+    namespace: kyverno
+    resourceVersion: "450336634"
+    uid: 3c3c0abd-42ce-4bc6-9260-dc8887f90630
+  spec:
+    clusterIP: 172.20.72.87
+    clusterIPs:
+    - 172.20.72.87
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: https
+    selector:
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/name: kyverno
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: "2023-05-31T08:55:37Z"
+    labels:
+      app.kubernetes.io/component: kyverno
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: kyverno
+      app.kubernetes.io/part-of: kyverno
+      app.kubernetes.io/version: 1.6.2
+      helm.sh/chart: kyverno-1.6.2
+    name: kyverno-svc-metrics
+    namespace: kyverno
+    resourceVersion: "450336645"
+    uid: 32b02a48-784c-4308-a07b-72bce975bf05
+  spec:
+    clusterIP: 172.20.205.112
+    clusterIPs:
+    - 172.20.205.112
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: metrics-port
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+    selector:
+      app: kyverno
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/name: kyverno
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIICyDCCAbCgAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
+      cm5ldGVzMB4XDTIwMTIxNjEyNTg1NVoXDTMwMTIxNDEyNTg1NVowFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALuQ
+      967S7o5xtiBKOnHDgOm57MLGzWG3nSwOUlh5HNqaevNjbHadPvUXdMCKDb1Ha1IO
+      utcoN8I5+e4sS+cy35sjJ6OxcO3h5lmNSQR7bWeMGYnzvAqXC+RrRj6+Aj/94kPd
+      lEhd4JflQRdsXALPD5wzGL8+VQ8cAeKqFHpAqtMp0An0XW5MVi4LWSqVcF1n1Aa3
+      qe1g762Qbpg7lU6CgsubrGvSwpFJSd5B6BaNfO1+vmjH3E29THSae79s1xC+376q
+      QyyqoYImFdsVbP2NudfgwaJX7YnKmhTWQPt+raeDvicsUfNaQyNud1RbnzuxEiMJ
+      QbQcKSXKnjFZG4TczfECAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
+      /wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAEEY64lsuQq5kCbgGUL3OKrYe/oM
+      1uwcxWWRij43uKYa/bAlqxfBowHOsMEx8IdEoB7+5dc/y7JuufN38v+jA+aLUfiy
+      OM6AvKqvMlRAOv9jI/sDrF9heMKygRcqd9GEgHapvhDndXWdRNx3yxGn7sWXTSB2
+      zoqycKHm+v5RSh97UJlNEU0HuwHMvoAkSsnHX3URGLzQ6MurtrCbDgO2vr/XJKwM
+      lCCpKFUo4Bbo7drD+8wFI1SgSc2LhTHY3kkCQdHWh0/3/vbidc5XT6ZikpQkeFDQ
+      4gFq45NZOnL+EuBeU6+elNx4W32Aaq4P12uSNDFANyXT/5mjESq6tNZ0a+4=
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    creationTimestamp: "2023-05-31T08:55:14Z"
+    name: kube-root-ca.crt
+    namespace: kyverno
+    resourceVersion: "450336394"
+    uid: e90c9aa0-f9b0-48ff-ae56-cd0ad22c71dc
+- apiVersion: v1
+  data:
+    resourceFilters: '[*,kyverno,*][Event,*,*][*,kube-system,*][*,kube-public,*][*,kube-node-lease,*][Node,*,*][APIService,*,*][TokenReview,*,*][SubjectAccessReview,*,*][SelfSubjectAccessReview,*,*][Binding,*,*][ReplicaSet,*,*][AdmissionReport,*,*][ClusterAdmissionReport,*,*][BackgroundScanReport,*,*][ClusterBackgroundScanReport,*,*][ClusterRole,*,kyverno:*][ClusterRoleBinding,*,kyverno:*][ServiceAccount,kyverno,kyverno][ConfigMap,kyverno,kyverno][ConfigMap,kyverno,kyverno-metrics][Deployment,kyverno,kyverno][Job,kyverno,kyverno-hook-pre-delete][NetworkPolicy,kyverno,kyverno][PodDisruptionBudget,kyverno,kyverno][Role,kyverno,kyverno:*][RoleBinding,kyverno,kyverno:*][Secret,kyverno,kyverno-svc.kyverno.svc.*][Service,kyverno,kyverno-svc][Service,kyverno,kyverno-svc-metrics][ServiceMonitor,kyverno,kyverno-svc-service-monitor][Pod,kyverno,kyverno-test]'
+    webhooks: '[{"namespaceSelector": {"matchExpressions": [{"key":"kubernetes.io/metadata.name","operator":"NotIn","values":["kyverno"]}]}}]'
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: "2023-05-31T08:55:37Z"
+    labels:
+      app: kyverno
+      app.kubernetes.io/component: kyverno
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: kyverno
+      app.kubernetes.io/part-of: kyverno
+      app.kubernetes.io/version: 1.6.2
+      helm.sh/chart: kyverno-1.6.2
+    name: kyverno
+    namespace: kyverno
+    resourceVersion: "450336624"
+    uid: a8ce9bf2-6256-42de-b09f-457f8a098981
+- apiVersion: v1
+  data:
+    namespaces: '{"exclude":[],"include":[]}'
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: "2023-05-31T08:55:37Z"
+    labels:
+      app: kyverno
+      app.kubernetes.io/component: kyverno
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: kyverno
+      app.kubernetes.io/part-of: kyverno
+      app.kubernetes.io/version: 1.6.2
+      helm.sh/chart: kyverno-1.6.2
+    name: kyverno-metrics
+    namespace: kyverno
+    resourceVersion: "450336670"
+    uid: a11dd6c2-352a-4d10-93f0-c00fa2f483bf
+kind: List
+metadata:
+  resourceVersion: ""
