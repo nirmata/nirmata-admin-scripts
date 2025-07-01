@@ -108,7 +108,7 @@ run_env_restore() {
     if [[ "${RUN_ENV_RESTORE:-true}" == "true" ]]; then
         log "Starting environment settings restoration..."
         
-        if "$PARENT_DIR/scripts/restore_env_settings_cross_env.sh" \
+        if "$PARENT_DIR/03-migration-scripts/phase2-environments/restore_env_settings_cross_env.sh" \
             "$SOURCE_API_ENDPOINT" \
             "$SOURCE_API_TOKEN" \
             "$SOURCE_CLUSTER_NAME" \
@@ -130,7 +130,7 @@ run_app_migration() {
     if [[ "${RUN_APP_MIGRATION:-true}" == "true" ]]; then
         log "Starting application migration to catalog..."
         
-        if "$PARENT_DIR/scripts/migrate_env_apps_to_catalog_cross_env.sh" \
+        if "$PARENT_DIR/03-migration-scripts/phase4-applications/migrate_env_apps_to_catalog_cross_env.sh" \
             "$SOURCE_API_ENDPOINT" \
             "$SOURCE_API_TOKEN" \
             "$SOURCE_CLUSTER_NAME" \
@@ -152,7 +152,7 @@ run_catalog_references() {
     if [[ "${RUN_CATALOG_REFERENCES:-true}" == "true" ]]; then
         log "Starting catalog references update..."
         
-        if "$PARENT_DIR/scripts/update_catalog_references_cross_env.sh" \
+        if "$PARENT_DIR/03-migration-scripts/phase4-applications/update_catalog_references_cross_env.sh" \
             "$SOURCE_API_ENDPOINT" \
             "$SOURCE_API_TOKEN" \
             "$SOURCE_CLUSTER_NAME" \

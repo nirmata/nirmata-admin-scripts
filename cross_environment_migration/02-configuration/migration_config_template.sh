@@ -68,4 +68,4 @@ CHECK_GIT_CREDENTIALS=true
 # 3. Run: ./run_migration_with_config.sh
 # 4. Or source the config and run individual scripts:
 #    source migration_config_local.sh
-#    ../scripts/restore_env_settings_cross_env.sh "$SOURCE_API_ENDPOINT" "$SOURCE_API_TOKEN" "$SOURCE_CLUSTER_NAME" "$DEST_API_ENDPOINT" "$DEST_API_TOKEN" "$DEST_CLUSTER_NAME" 
+#    ../03-migration-scripts/phase2-environments/restore_env_settings_cross_env.sh "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER" 
