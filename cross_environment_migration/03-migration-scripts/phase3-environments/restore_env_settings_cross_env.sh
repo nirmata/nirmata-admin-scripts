@@ -5,7 +5,7 @@ if [ "$#" -ne 6 ]; then
     echo "Usage: $0 <source_api_endpoint> <source_token> <source_cluster> <dest_api_endpoint> <dest_token> <dest_cluster>"
     echo ""
     echo "Example:"
-    echo "$0 https://pe420.nirmata.co 'SOURCE_TOKEN' '123-app-migration' https://staging.nirmata.co 'DEST_TOKEN' 'conformance-132'"
+    echo "$0 https://source.nirmata.co 'SOURCE_TOKEN' 'source-cluster' https://destination.nirmata.co 'DEST_TOKEN' 'dest-cluster'"
     exit 1
 fi
 

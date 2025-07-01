@@ -240,7 +240,7 @@ export BATCH_SIZE=10
 # export SOURCE_API="https://production.nirmata.co"
 # export SOURCE_TOKEN="prod_token_here"
 # export SOURCE_CLUSTER="prod-cluster"
-# export DEST_API="https://staging.nirmata.co"
+# export DEST_API="https://your-destination.nirmata.co"
 # export DEST_TOKEN="staging_token_here"
 # export DEST_CLUSTER="staging-cluster"
 

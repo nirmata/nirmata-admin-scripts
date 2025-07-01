@@ -1,39 +1,49 @@
-# 👥 Phase 3: Users & Teams Migration
+# 👥 Phase 2: Users & Teams Migration
 
 **Purpose**: Migrate users and teams with complete role and permission preservation
 
-## 👥 Scripts in this Phase
+## 🧪 Scripts in this Phase
 
-### `copy_cluster_teams_with_full_user_roles.sh` (Recommended)
+### `copy_cluster_teams_with_full_user_roles.sh`
 **What it does**: Complete user and team migration with role preservation
-- Extracts actual source user roles (admin, devops, etc.)
+- Migrates user profiles with roles (admin, devops, etc.)
 - Preserves identity providers (SAML, Azure AD, Local)
-- Creates teams with proper user associations
-- Maintains user permissions and access levels
+- Creates team structures and memberships
+- Handles user-team associations properly
+
+**Arguments**: Requires 6 arguments in this order:
+1. `source_api_endpoint` - Source Nirmata API URL
+2. `source_token` - Source API token
+3. `source_cluster` - Source cluster name
+4. `dest_api_endpoint` - Destination Nirmata API URL
+5. `dest_token` - Destination API token
+6. `dest_cluster` - Destination cluster name
 
 **Usage**:
 ```bash
-# Preserve identity providers (recommended for production)
-IDENTITY_PROVIDER_MODE=preserve ./copy_cluster_teams_with_full_user_roles.sh \
-  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
-  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
+# Direct script call
+./copy_cluster_teams_with_full_user_roles.sh \
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
 
-# Convert all to Local (for testing environments)
-IDENTITY_PROVIDER_MODE=convert ./copy_cluster_teams_with_full_user_roles.sh \
-  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
-  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
+# Or run via RUN_THIS_PHASE.sh
+./RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
 ```
 
-### `copy_cluster_teams_with_roles.sh` (Alternative)
-**What it does**: Simplified team migration without full user profile creation
-- Migrates teams and basic user associations
-- Less comprehensive than the full migration script
+### `copy_cluster_teams_with_roles.sh`
+**What it does**: Alternative team migration script
+- Simpler team migration without full user profiles
+- Useful for basic team structure copying
+
+**Arguments**: Same 6 arguments as above
 
 **Usage**:
 ```bash
 ./copy_cluster_teams_with_roles.sh \
-  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
-  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
 ```
 
 ## 📊 What Gets Migrated
@@ -44,13 +54,25 @@ IDENTITY_PROVIDER_MODE=convert ./copy_cluster_teams_with_full_user_roles.sh \
 - **User-Team Associations**: Team memberships and relationships
 - **Role Assignments**: Admin, devops, and custom roles
 
+## 🔧 Identity Provider Modes
+
+### `preserve` (Default)
+- Tries to preserve original identity providers (SAML, Azure AD)
+- Warns if destination doesn't support source identity provider
+- Falls back to Local if needed
+
+### `convert`
+- Forces all users to Local identity provider
+- Use when destination doesn't support SSO
+- Users will need to reset passwords
+
 ## ✅ Success Criteria
 
-Phase 3 is successful when:
-- All users are created or updated in destination
+Phase 2 is successful when:
+- All users are created in destination with correct roles
 - Teams are created with proper memberships
-- User roles are preserved accurately
 - Identity providers are handled correctly
+- No authentication errors occur
 
 ## 📋 Expected Output
 
@@ -61,31 +83,12 @@ Phase 3 is successful when:
 ⚠️  Identity provider conversions: SAML→Local(3)
 ```
 
-## ⚙️ Configuration Options
-
-### Identity Provider Modes
-
-**Preserve Mode** (Recommended for production):
-```bash
-export IDENTITY_PROVIDER_MODE="preserve"
-```
-- Keeps original identity providers when possible
-- Converts to Local only when destination doesn't support source provider
-- Provides warnings for conversions
-
-**Convert Mode** (For testing):
-```bash
-export IDENTITY_PROVIDER_MODE="convert"
-```
-- Converts all users to Local authentication
-- Simpler setup but loses SSO integration
-
 ## ⚠️ Common Issues
 
-- **User invitation failures**: Destination environment restrictions (common in production)
-- **Identity provider mismatches**: SAML/Azure AD not configured in destination
-- **Role assignment errors**: Destination requires specific roles during user creation
-- **Duplicate users**: Users already exist with different configurations
+- **User invitation failures**: Production environments may restrict user creation
+- **Identity provider mismatches**: Configure SAML/Azure AD in destination first
+- **Role assignment errors**: Check required roles exist in destination
+- **Permission issues**: Ensure destination token has user management privileges
 
 ## 🔧 Troubleshooting
 
@@ -105,5 +108,5 @@ curl -s -H "Authorization: NIRMATA-API $DEST_TOKEN" \
 
 ## 📋 Next Steps
 
-After Phase 3 succeeds, proceed to:
-**Phase 4**: `../phase4-applications/` 
+After Phase 2 succeeds, proceed to:
+**Phase 3**: `../phase3-environments/` 

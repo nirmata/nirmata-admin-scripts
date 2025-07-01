@@ -1,69 +1,113 @@
 # ✅ Phase 5: Post-Migration Verification
 
-**Purpose**: Validate migration success and ensure data integrity
+**Purpose**: Validate migration success and verify system integrity
 
-## ✅ Scripts in this Phase
+## 🧪 Scripts in this Phase
 
 ### `run_test_suite.sh`
 **What it does**: Comprehensive post-migration validation
-- Validates user and team migration success
-- Checks role preservation accuracy
-- Verifies environment configuration integrity
-- Tests application functionality and references
-- Generates migration success report
+- Verifies all migrated components are working correctly
+- Tests user authentication and team permissions
+- Validates environment configurations and applications
+- Confirms migration completeness and data integrity
+
+**Arguments**: Requires 6 arguments in this order:
+1. `source_api_endpoint` - Source Nirmata API URL
+2. `source_token` - Source API token
+3. `source_cluster` - Source cluster name
+4. `dest_api_endpoint` - Destination Nirmata API URL
+5. `dest_token` - Destination API token
+6. `dest_cluster` - Destination cluster name
 
 **Usage**:
 ```bash
-./run_test_suite.sh --mode=post-migration
+# Direct script call
+./run_test_suite.sh \
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
+
+# Or run via RUN_THIS_PHASE.sh
+./RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
 ```
 
-## 🧪 What Gets Validated
+## 📋 Verification Areas
 
-### User & Team Verification
-- All users migrated successfully
-- User roles preserved correctly (admin, devops, etc.)
-- Identity providers handled properly
-- Team memberships intact
+### 🔐 **Authentication & Users**
+- User login functionality
+- Role assignments and permissions
+- Identity provider integration (SAML/Azure AD)
+- Team memberships and access
 
-### Environment Verification
-- Environment configurations copied correctly
-- Team role bindings preserved
-- Policies and settings maintained
-- No configuration drift
+### 🏗️ **Environments**
+- Environment configurations match source
+- Team permissions are correctly assigned
+- Policies and settings are preserved
+- Cluster associations are correct
 
-### Application Verification
-- Git-based applications converted to catalog
-- Application references updated correctly
-- Catalog applications functional
-- No broken dependencies
+### 📱 **Applications**
+- Catalog applications are accessible
+- Application references are updated
+- Git credentials are working
+- Application deployments are functional
+
+### 🔍 **Data Integrity**
+- No missing components
+- Cross-references are intact
+- Metadata is preserved
+- Audit trails are complete
 
 ## ✅ Success Criteria
 
 Phase 5 is successful when:
-- All validation tests pass
-- No critical migration errors found
-- Data integrity is confirmed
-- All components are functional
+- All verification tests pass (≥90% success rate)
+- Critical components are fully functional
+- No data corruption or missing elements
+- Users can access destination environment successfully
 
 ## 📋 Expected Output
 
 ```
-✅ Test 1: Authentication validation - PASSED
-✅ Test 2: User role preservation - PASSED  
-✅ Test 3: Team creation validation - PASSED
-✅ Test 4: Identity provider compatibility - PASSED
-✅ Test 5: Environment integrity - PASSED
-✅ Test 6: Application migration - PASSED
-✅ Test 7: Catalog references - PASSED
+✅ Phase 5: Post-Migration Verification Complete!
 
-🎉 Test Results: 10/10 tests passed (100%)
+📊 Test Results Summary:
+   📋 Phase 1: Pre-migration validation ✅
+   👥 Phase 2: User & team migration ✅  
+   🏗️ Phase 3: Environment migration ✅
+   📱 Phase 4: Application migration ✅
+   ✅ Phase 5: Post-migration verification ✅
 
-📊 Migration Summary:
-👥 Users migrated: 15/15 (100%)
-🏷️  Teams created: 4/4 (100%)
-🏗️  Environments: 7/7 (100%)
-📱 Applications: 18/25 (72% - 7 skipped non-Git apps)
+🎯 Migration Success Rate: 100%
+✅ All critical components verified
+✅ System ready for production use
 ```
+
+## ⚠️ Common Issues
+
+- **Authentication failures**: Users may need to reset passwords (Local auth)
+- **Permission mismatches**: Teams may need additional role assignments
+- **Application access issues**: Git credentials or catalog permissions
+- **Environment configuration drift**: Manual adjustments may be needed
+
+## 🔧 Troubleshooting
+
+If verification fails:
+1. **Review logs**: Check `../../06-logs/` for detailed error information
+2. **Re-run specific phases**: Address issues in earlier phases if needed
+3. **Manual verification**: Test critical functionality manually in destination UI
+4. **Contact support**: For complex issues or platform-specific problems
+
+## 🎉 Migration Complete!
+
+If Phase 5 passes, your cross-environment migration is complete! 
+
+### 📋 Next Steps:
+1. **User notification**: Inform users about the new environment
+2. **DNS/URL updates**: Update any hardcoded references to new environment
+3. **Monitoring setup**: Configure monitoring for the new environment
+4. **Backup verification**: Ensure backup processes are working
+5. **Documentation update**: Update internal documentation with new environment details
 
 ## 🔍 Manual Verification Commands
 
@@ -90,47 +134,6 @@ curl -s -H "Authorization: NIRMATA-API $DEST_TOKEN" \
 curl -s -H "Authorization: NIRMATA-API $DEST_TOKEN" \
   "$DEST_API/catalog/api/catalogapplications" | jq '.[] | {name: .name, gitRepo: .gitRepo}'
 ```
-
-## ⚠️ Common Issues
-
-- **Test failures**: Some components may not have migrated correctly
-- **Data inconsistencies**: Source and destination don't match
-- **Functional issues**: Applications or environments not working properly
-- **Permission problems**: Users can't access expected resources
-
-## 🔧 Troubleshooting
-
-### Test Failures
-1. Check detailed logs in `06-logs/` directory
-2. Re-run specific migration phases that failed
-3. Verify source and destination configurations
-
-### Data Inconsistencies
-1. Compare source vs destination manually
-2. Check for API rate limiting or timeout issues
-3. Verify all prerequisites were met
-
-### Functional Issues
-1. Test application deployments manually
-2. Verify Git credentials are working
-3. Check team permissions in destination UI
-
-## 📊 Migration Report
-
-After successful verification, you'll have:
-- **Complete audit trail** in log files
-- **Migration statistics** showing success rates
-- **Issue summary** with any warnings or errors
-- **Recommendations** for post-migration steps
-
-## 🎉 Migration Complete!
-
-After Phase 5 succeeds:
-1. **Review logs** in `06-logs/` for any warnings
-2. **Verify in UI** - Check destination Nirmata interface
-3. **Test functionality** - Deploy applications to verify end-to-end
-4. **Update documentation** - Record any environment-specific changes
-5. **Communicate success** - Notify stakeholders of completion
 
 ## 📋 Post-Migration Checklist
 

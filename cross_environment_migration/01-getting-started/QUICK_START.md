@@ -39,12 +39,12 @@ curl -s -H "Authorization: NIRMATA-API $DEST_TOKEN" "$DEST_API/users/api/users" 
 cd ../03-migration-scripts/phase1-validation
 ./RUN_THIS_PHASE.sh
 
-# Phase 2: Environment migration
-cd ../phase2-environments
+# Phase 2: User & team migration
+cd ../phase2-users-teams
 ./RUN_THIS_PHASE.sh
 
-# Phase 3: User & team migration
-cd ../phase3-users-teams
+# Phase 3: Environment migration
+cd ../phase3-environments
 ./RUN_THIS_PHASE.sh
 
 # Phase 4: Application migration

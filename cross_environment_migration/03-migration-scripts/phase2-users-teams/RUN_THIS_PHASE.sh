@@ -5,50 +5,49 @@
 
 set -e
 
+# Function to show usage
+show_usage() {
+    echo "Usage: $0 <source_api> <source_token> <source_cluster> <dest_api> <dest_token> <dest_cluster>"
+    echo ""
+    echo "Arguments:"
+    echo "  source_api     - Source Nirmata API endpoint (e.g., https://staging.nirmata.co)"
+    echo "  source_token   - Source environment API token"
+    echo "  source_cluster - Source cluster name"
+    echo "  dest_api       - Destination Nirmata API endpoint (e.g., https://pe420.nirmata.co)"
+    echo "  dest_token     - Destination environment API token"
+    echo "  dest_cluster   - Destination cluster name"
+    echo ""
+    echo "Example:"
+    echo "  $0 https://staging.nirmata.co TOKEN1 cluster1 https://pe420.nirmata.co TOKEN2 cluster2"
+    exit 1
+}
+
+# Check if correct number of arguments provided
+if [ $# -ne 6 ]; then
+    echo "❌ Error: Exactly 6 arguments required"
+    echo ""
+    show_usage
+fi
+
 echo "👥 Phase 2: User & Team Migration"
 echo "================================="
 echo ""
-
-# Check if configuration is loaded
-if [[ -z "$SOURCE_API" || -z "$DEST_API" ]]; then
-    echo "⚠️  Configuration not loaded. Loading from 02-configuration/migration_config.sh..."
-    echo ""
-    
-    # Try to load configuration
-    CONFIG_FILE="../../02-configuration/migration_config.sh"
-    if [[ -f "$CONFIG_FILE" ]]; then
-        source "$CONFIG_FILE"
-        echo "✅ Configuration loaded successfully"
-        echo "   Source: $SOURCE_API ($SOURCE_CLUSTER)"
-        echo "   Destination: $DEST_API ($DEST_CLUSTER)"
-        echo "   Identity Provider Mode: $IDENTITY_PROVIDER_MODE"
-        echo ""
-    else
-        echo "❌ Configuration file not found: $CONFIG_FILE"
-        echo ""
-        echo "Please:"
-        echo "1. Go to 02-configuration/ directory"
-        echo "2. Edit migration_config.sh with your environment details"
-        echo "3. Run: source migration_config.sh"
-        echo "4. Then run this script again"
-        exit 1
-    fi
-fi
+echo "Source: $1 ($3)"
+echo "Destination: $4 ($6)"
+echo ""
 
 echo "👥 Migrating users and teams with role preservation..."
 echo ""
 
-# Run the user & team migration
-if IDENTITY_PROVIDER_MODE="$IDENTITY_PROVIDER_MODE" \
-   ./copy_cluster_teams_with_full_user_roles.sh \
-   "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
-   "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"; then
+# Change to the correct directory and run the user & team migration
+cd "$(dirname "$0")"
+if ./copy_cluster_teams_with_full_user_roles.sh "$1" "$2" "$3" "$4" "$5" "$6"; then
     echo ""
     echo "✅ Phase 2 completed successfully!"
     echo ""
     echo "📋 Next Step: Run Phase 3"
     echo "   cd ../phase3-environments"
-    echo "   ./RUN_THIS_PHASE.sh"
+    echo "   ./RUN_THIS_PHASE.sh \"$1\" \"$2\" \"$3\" \"$4\" \"$5\" \"$6\""
     echo ""
     echo "💡 Verify in destination UI:"
     echo "   - Check that users were created with correct roles"

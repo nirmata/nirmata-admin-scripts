@@ -38,21 +38,21 @@ graph TD
     B --> B2["⚙️ Destination Preparation"]
     B --> B3["🧪 Run Pre-Migration Tests"]
     
-    B1 --> C["🏗️ Phase 2: Environment Migration"]
+    B1 --> C["👥 Phase 2: User & Team Migration"]
     B2 --> C
     B3 --> C
     
-    C --> C1["📁 Restore Environment Settings"]
-    C --> C2["🔐 Copy Team Permissions"]
-    C --> C3["📊 Migrate Environment Policies"]
+    C --> C1["👤 Extract Source User Profiles"]
+    C --> C2["🏷️ Preserve Roles & Identity Providers"]
+    C --> C3["👥 Create Teams & Associations"]
     
-    C1 --> D["👥 Phase 3: User & Team Migration"]
+    C1 --> D["🏗️ Phase 3: Environment Migration"]
     C2 --> D
     C3 --> D
     
-    D --> D1["👤 Extract Source User Profiles"]
-    D --> D2["🏷️ Preserve Roles & Identity Providers"]
-    D --> D3["👥 Create Teams & Associations"]
+    D --> D1["📁 Restore Environment Settings"]
+    D --> D2["🔐 Copy Team Permissions"]
+    D --> D3["📊 Migrate Environment Policies"]
     
     D1 --> E["📱 Phase 4: Application Migration"]
     D2 --> E
@@ -163,40 +163,54 @@ cd ../01-getting-started
 
 ## 🚀 Quick Start
 
-### **Recommended: One-by-One Migration**
+### **🎯 Simple Arguments-Only Approach**
+
+All scripts in this toolkit use **6 simple arguments** - no configuration files needed!
+
+**The 6 Arguments (always the same order):**
+1. `source_api` - Source Nirmata API endpoint (e.g., https://staging.nirmata.co)
+2. `source_token` - Source environment API token
+3. `source_cluster` - Source cluster name
+4. `dest_api` - Destination Nirmata API endpoint (e.g., https://pe420.nirmata.co)
+5. `dest_token` - Destination environment API token
+6. `dest_cluster` - Destination cluster name
+
+### **📋 Step-by-Step Migration**
+
+**🔄 Run each phase in sequence with your 6 arguments:**
+
 ```bash
-# 1. Setup (run once)
-cd 01-getting-started
-./setup.sh
+# Phase 1: Pre-Migration Validation
+./03-migration-scripts/phase1-validation/RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
 
-# 2. Configure (edit with your details)
-cd ../02-configuration
-nano migration_config.sh
+# Phase 2: User & Team Migration
+./03-migration-scripts/phase2-users-teams/RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
 
-# 3. Run phases one by one
-cd ../03-migration-scripts/phase1-validation
-./RUN_THIS_PHASE.sh
+# Phase 3: Environment Migration
+./03-migration-scripts/phase3-environments/RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
 
-cd ../phase2-environments
-./RUN_THIS_PHASE.sh
+# Phase 4: Application Migration
+./03-migration-scripts/phase4-applications/RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
 
-cd ../phase3-users-teams
-./RUN_THIS_PHASE.sh
-
-cd ../phase4-applications
-./RUN_THIS_PHASE.sh
-
-cd ../phase5-verification
-./RUN_THIS_PHASE.sh
+# Phase 5: Post-Migration Verification
+./03-migration-scripts/phase5-verification/RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
 ```
 
-### **Alternative: Complete Automated Migration**
+### **🚀 Alternative: One-Command Migration**
 ```bash
-# Load your configuration
-source 02-configuration/migration_config.sh
-
-# Run complete migration workflow
-./complete_migration_workflow.sh
+./complete_migration_workflow.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
 ```
 
 ## 📖 Detailed Migration Guide
@@ -211,24 +225,23 @@ cd 03-migration-scripts/phase1-validation
 - Checks identity provider compatibility
 - Runs comprehensive test suite
 
-### **Phase 2: Environment Migration**
+### **Phase 2: User & Team Migration**
 ```bash
-cd ../phase2-environments
-./RUN_THIS_PHASE.sh
+# Create users and teams first (foundation)
+cd ../phase2-users-teams
+./copy_cluster_teams_with_full_user_roles.sh \
+  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
+  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
 ```
-- Migrates environment settings and policies
-- Copies team permissions to environments
-- Preserves environment configurations
 
-### **Phase 3: User & Team Migration**
+### **Phase 3: Environment Migration**
 ```bash
-cd ../phase3-users-teams
-./RUN_THIS_PHASE.sh
+# Then migrate environments and associate existing teams
+cd ../phase3-environments
+./restore_env_settings_cross_env.sh \
+  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
+  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
 ```
-- Migrates user profiles with role preservation
-- Creates teams with proper memberships
-- Handles SAML/Azure AD identity providers
-- Associates users with teams correctly
 
 ### **Phase 4: Application Migration**
 ```bash
@@ -296,10 +309,10 @@ Check the `04-examples/` directory for:
 │   ├── ⚙️ migration_config.sh          # Your environment settings
 │   └── 📄 migration_config_template.sh # Template with examples
 │
-├── 📂 03-migration-scripts/        👈 MIGRATION PHASES
+├── 📂 03-migration-scripts/        👈 MIGRATION PHASES (Run One by One)
 │   ├── 📋 phase1-validation/          # Pre-migration testing
-│   ├── 🏗️ phase2-environments/        # Environment migration
-│   ├── 👥 phase3-users-teams/         # User & team migration
+│   ├── 👥 phase2-users-teams/         # User & team migration
+│   ├── 🏗️ phase3-environments/        # Environment migration
 │   ├── 📱 phase4-applications/        # Application migration
 │   └── ✅ phase5-verification/        # Post-migration validation
 │

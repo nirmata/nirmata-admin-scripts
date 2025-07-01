@@ -1,36 +1,75 @@
 # 📱 Phase 4: Application Migration
 
-**Purpose**: Convert Git-based applications to catalog applications and update references
+**Purpose**: Migrate applications from environments to catalog-based deployments
 
-## 📱 Scripts in this Phase
+## 🧪 Scripts in this Phase
 
-### `migrate_env_apps_to_catalog_cross_env.sh` (Step 4a)
-**What it does**: Convert Git-based applications to catalog applications
-- Finds Git-based applications in source environments
-- Creates catalog applications in destination environment
-- Preserves application configurations and Git settings
-- Maps Git credentials between environments
+### `migrate_env_apps_to_catalog_cross_env.sh`
+**What it does**: Converts environment-based Git applications to catalog applications
+- Identifies Git-based applications in source environments
+- Creates corresponding catalog applications in destination
+- Handles Git credential mapping and repository references
+- Preserves application configurations and metadata
+
+**Arguments**: Requires 6 arguments in this order:
+1. `source_api_endpoint` - Source Nirmata API URL
+2. `source_token` - Source API token
+3. `source_cluster` - Source cluster name
+4. `dest_api_endpoint` - Destination Nirmata API URL
+5. `dest_token` - Destination API token
+6. `dest_cluster` - Destination cluster name
 
 **Usage**:
 ```bash
+# Direct script call
 ./migrate_env_apps_to_catalog_cross_env.sh \
-  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
-  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
+
+# Or run via RUN_THIS_PHASE.sh
+./RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
 ```
 
-### `update_catalog_references_cross_env.sh` (Step 4b)
-**What it does**: Update application references in destination environments
-- Points applications to new catalog applications
-- Updates environment references
-- Maintains deployment configurations
-- Preserves application relationships
+### `update_catalog_references_cross_env.sh`
+**What it does**: Updates application references in environments to use catalog apps
+- Scans destination environments for application references
+- Updates references to point to newly created catalog applications
+- Ensures applications are properly linked to environments
+- Maintains application deployment configurations
+
+**Arguments**: Requires 6 arguments in this order:
+1. `source_api_endpoint` - Source Nirmata API URL
+2. `source_token` - Source API token
+3. `source_cluster` - Source cluster name
+4. `dest_api_endpoint` - Destination Nirmata API URL
+5. `dest_token` - Destination API token
+6. `dest_cluster` - Destination cluster name
 
 **Usage**:
 ```bash
+# Direct script call
 ./update_catalog_references_cross_env.sh \
-  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
-  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
+
+# Or run via RUN_THIS_PHASE.sh
+./RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
 ```
+
+## 📋 Prerequisites
+
+- **Phase 3 completed**: Environments must exist in destination
+- **Git credentials**: Ensure Git credentials are configured in destination
+- **Catalog access**: Destination token must have catalog management permissions
+
+## 🔄 Migration Process
+
+1. **Phase 4a**: Convert Git apps to catalog apps (`migrate_env_apps_to_catalog_cross_env.sh`)
+2. **Phase 4b**: Update environment references (`update_catalog_references_cross_env.sh`)
 
 ## 📊 What Gets Migrated
 
@@ -49,17 +88,22 @@
 
 Phase 4 is successful when:
 - All Git-based applications are converted to catalog applications
-- Application references are updated in destination environments
+- Application references in environments are updated correctly
 - Git credentials are properly mapped
-- No broken application dependencies
+- No broken application links remain
 
 ## 📋 Expected Output
 
 ```
-📦 Applications processed: 25/25
-✅ Catalog applications created: 18/18
-🔗 References updated: 42/42
-⚠️  Skipped non-Git apps: 7
+Phase 4a: Application Migration
+Git-based applications found: 5
+Successfully created catalog apps: 5
+Failed applications: 0
+
+Phase 4b: Reference Updates
+Applications processed: 88
+References updated: 12
+Warnings: 0
 ```
 
 ## 🏷️ Application Naming Convention
@@ -71,10 +115,10 @@ Migrated applications follow this pattern:
 
 ## ⚠️ Common Issues
 
-- **Git credential mapping failures**: No matching credentials in destination
-- **Repository access issues**: Private repositories not accessible from destination
-- **Catalog creation failures**: Insufficient permissions or naming conflicts
-- **Reference update failures**: Applications not found or already updated
+- **Git credential mapping failures**: Ensure Git credentials exist in destination
+- **Application creation errors**: Check catalog permissions and naming conflicts
+- **Reference update failures**: Verify environment and application IDs are correct
+- **No Git apps found**: Source may only have catalog apps (this is normal)
 
 ## 🔧 Troubleshooting
 

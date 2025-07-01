@@ -7,16 +7,16 @@
 # ============================================================================
 # SOURCE ENVIRONMENT CONFIGURATION
 # ============================================================================
-SOURCE_API_ENDPOINT="https://pe420.nirmata.co"
+SOURCE_API_ENDPOINT="https://your-source.nirmata.co"
 SOURCE_API_TOKEN="YOUR_SOURCE_API_TOKEN_HERE"
-SOURCE_CLUSTER_NAME="123-app-migration"
+SOURCE_CLUSTER_NAME="source-cluster-name"
 
 # ============================================================================
 # DESTINATION ENVIRONMENT CONFIGURATION  
 # ============================================================================
-DEST_API_ENDPOINT="https://staging.nirmata.co"
+DEST_API_ENDPOINT="https://your-destination.nirmata.co"
 DEST_API_TOKEN="YOUR_DEST_API_TOKEN_HERE"
-DEST_CLUSTER_NAME="conformance-132"
+DEST_CLUSTER_NAME="destination-cluster-name"
 
 # ============================================================================
 # MIGRATION OPTIONS
@@ -52,13 +52,13 @@ CHECK_GIT_CREDENTIALS=true
 # ============================================================================
 # Uncomment and modify these lines with your actual values:
 
-# SOURCE_API_ENDPOINT="https://pe420.nirmata.co"
-# SOURCE_API_TOKEN="W6mdT3taq2nkLxmmJFyHfpMzrUeow0HTeQQx3/n7lvXfJYyT7l+Rd3oaSwR7NJyyRhnOQWF7nH1aNHYsEJURZg=="
-# SOURCE_CLUSTER_NAME="123-app-migration"
+# SOURCE_API_ENDPOINT="https://your-source.nirmata.co"
+# SOURCE_API_TOKEN="your_actual_source_token_here"
+# SOURCE_CLUSTER_NAME="your-source-cluster-name"
 
-# DEST_API_ENDPOINT="https://staging.nirmata.co"  
-# DEST_API_TOKEN="c7/tRvOi3shNloGDjtWABf/KKckLjeNNf7q1N81uTrAMA7YXxuJ43prRuQYjR4RRFssLshsT39SxvlWIeRKNIg=="
-# DEST_CLUSTER_NAME="conformance-132"
+# DEST_API_ENDPOINT="https://your-destination.nirmata.co"  
+# DEST_API_TOKEN="your_actual_destination_token_here"
+# DEST_CLUSTER_NAME="your-destination-cluster-name"
 
 # ============================================================================
 # USAGE INSTRUCTIONS

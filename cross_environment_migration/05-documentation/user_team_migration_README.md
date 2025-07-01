@@ -6,9 +6,9 @@ This directory contains scripts for migrating users and teams between different 
 Use these scripts when you need to migrate users and teams from one Nirmata environment to another, but only want to migrate those that are actually being used in a specific cluster.
 
 **Example Scenario:**
-- Source: `staging.nirmata.co` with cluster `conformance-132`
-- Destination: `pe420.nirmata.co` with cluster `old-app-migration`
-- Goal: Copy only teams/users that have permissions in the `conformance-132` cluster
+- Source: `source.nirmata.co` with cluster `source-cluster`
+- Destination: `destination.nirmata.co` with cluster `dest-cluster`
+- Goal: Copy only teams/users that have permissions in the source cluster
 
 ## How It Works
 
@@ -41,12 +41,12 @@ Main migration script that handles the entire process.
 **Example:**
 ```bash
 ./copy_users_teams_cross_env.sh \
-    "https://staging.nirmata.co" \
-    "c7/tRvOi3shNloGDjtWABf/KKckLjeNNf7q1N81uTrAMA7YXxuJ43prRuQYjR4RRFssLshsT39SxvlWIeRKNIg==" \
-    "conformance-132" \
-    "https://pe420.nirmata.co" \
-    "W6mdT3taq2nkLxmmJFyHfpMzrUeow0HTeQQx3/n7lvXfJYyT7l+Rd3oaSwR7NJyyRhnOQWF7nH1aNHYsEJURZg==" \
-    "old-app-migration"
+    "https://source.nirmata.co" \
+    "YOUR_SOURCE_TOKEN_HERE" \
+    "source-cluster" \
+    "https://destination.nirmata.co" \
+    "YOUR_DESTINATION_TOKEN_HERE" \
+    "dest-cluster"
 ```
 
 ### `run_user_team_migration_example.sh`
@@ -58,8 +58,8 @@ Pre-configured example script with your specific environment details.
 ```
 
 This script uses the following configuration:
-- **Source**: `staging.nirmata.co` (cluster: `conformance-132`)
-- **Destination**: `pe420.nirmata.co` (cluster: `old-app-migration`)
+- **Source**: `source.nirmata.co` (cluster: `source-cluster`)
+- **Destination**: `destination.nirmata.co` (cluster: `dest-cluster`)
 
 ## Prerequisites
 

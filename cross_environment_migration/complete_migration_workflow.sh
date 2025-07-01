@@ -42,61 +42,69 @@ usage() {
     cat << EOF
 🚀 Complete Cross-Environment Migration Workflow
 
-Usage: $0 [options]
+Usage: $0 <source_api> <source_token> <source_cluster> <dest_api> <dest_token> <dest_cluster> [options]
+
+Required Arguments:
+    source_api      Source Nirmata API endpoint (e.g., https://staging.nirmata.co)
+    source_token    Source environment API token
+    source_cluster  Source cluster name
+    dest_api        Destination Nirmata API endpoint (e.g., https://pe420.nirmata.co)
+    dest_token      Destination environment API token
+    dest_cluster    Destination cluster name
 
 Options:
     -h, --help              Show this help message
-    -c, --config FILE       Use configuration file (default: migration_config.sh)
     -m, --mode MODE         Migration mode: full|selective (default: full)
     -t, --test              Run in test mode (dry run)
     -v, --verbose           Enable verbose logging
     --skip-validation       Skip pre-migration validation
     --skip-post-validation  Skip post-migration validation
 
-Configuration:
-    Set these environment variables or use a config file:
-    - SOURCE_API: Source Nirmata API endpoint
-    - SOURCE_TOKEN: Source API token
-    - SOURCE_CLUSTER: Source cluster name
-    - DEST_API: Destination Nirmata API endpoint
-    - DEST_TOKEN: Destination API token
-    - DEST_CLUSTER: Destination cluster name
-    - IDENTITY_PROVIDER_MODE: preserve|convert (default: preserve)
-
 Examples:
-    # Full migration with default config
-    $0
-
-    # Use custom config file
-    $0 --config my_migration_config.sh
+    # Full migration
+    $0 https://staging.nirmata.co TOKEN1 cluster1 https://pe420.nirmata.co TOKEN2 cluster2
 
     # Test mode (dry run)
-    $0 --test
+    $0 https://staging.nirmata.co TOKEN1 cluster1 https://pe420.nirmata.co TOKEN2 cluster2 --test
 
-    # Selective migration (user choice)
-    $0 --mode selective
+    # Skip validation
+    $0 https://staging.nirmata.co TOKEN1 cluster1 https://pe420.nirmata.co TOKEN2 cluster2 --skip-validation
 
 EOF
 }
 
-# Default values
-CONFIG_FILE="migration_config.sh"
+# Check if correct number of arguments provided (at least 6)
+if [ $# -lt 6 ]; then
+    echo "❌ Error: At least 6 arguments required"
+    echo ""
+    usage
+    exit 1
+fi
+
+# Parse required arguments
+SOURCE_API="$1"
+SOURCE_TOKEN="$2"
+SOURCE_CLUSTER="$3"
+DEST_API="$4"
+DEST_TOKEN="$5"
+DEST_CLUSTER="$6"
+
+# Shift to process optional arguments
+shift 6
+
+# Default values for options
 MIGRATION_MODE="full"
 TEST_MODE=false
 VERBOSE=false
 SKIP_VALIDATION=false
 SKIP_POST_VALIDATION=false
 
-# Parse command line arguments
+# Parse optional arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         -h|--help)
             usage
             exit 0
-            ;;
-        -c|--config)
-            CONFIG_FILE="$2"
-            shift 2
             ;;
         -m|--mode)
             MIGRATION_MODE="$2"
@@ -126,26 +134,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Load configuration
-if [[ -f "$CONFIG_FILE" ]]; then
-    log "Loading configuration from $CONFIG_FILE"
-    source "$CONFIG_FILE"
-else
-    log_warning "Configuration file $CONFIG_FILE not found"
-    log "Please set environment variables or create a configuration file"
-    
-    # Check if environment variables are set
-    if [[ -z "$SOURCE_API" || -z "$SOURCE_TOKEN" || -z "$SOURCE_CLUSTER" || 
-          -z "$DEST_API" || -z "$DEST_TOKEN" || -z "$DEST_CLUSTER" ]]; then
-        log_error "Missing required environment variables"
-        log "Required: SOURCE_API, SOURCE_TOKEN, SOURCE_CLUSTER, DEST_API, DEST_TOKEN, DEST_CLUSTER"
-        exit 1
-    fi
+# Validate required parameters
+if [ -z "$SOURCE_API" ] || [ -z "$SOURCE_TOKEN" ] || [ -z "$SOURCE_CLUSTER" ] || \
+   [ -z "$DEST_API" ] || [ -z "$DEST_TOKEN" ] || [ -z "$DEST_CLUSTER" ]; then
+    echo "❌ Error: All 6 arguments are required"
+    usage
+    exit 1
 fi
-
-# Set defaults
-IDENTITY_PROVIDER_MODE=${IDENTITY_PROVIDER_MODE:-"preserve"}
-LOG_LEVEL=${LOG_LEVEL:-"INFO"}
 
 # Display configuration
 log_phase "🔧 Migration Configuration"
@@ -153,7 +148,6 @@ log "Source Environment: $SOURCE_API"
 log "Source Cluster: $SOURCE_CLUSTER"
 log "Destination Environment: $DEST_API"
 log "Destination Cluster: $DEST_CLUSTER"
-log "Identity Provider Mode: $IDENTITY_PROVIDER_MODE"
 log "Migration Mode: $MIGRATION_MODE"
 log "Test Mode: $TEST_MODE"
 
@@ -252,7 +246,7 @@ run_pre_migration_validation() {
         log "Running comprehensive pre-migration tests..."
         cd "$SCRIPT_DIR/03-migration-scripts/phase1-validation"
         
-        if ./run_test_suite.sh --mode=pre-migration; then
+        if ./run_test_suite.sh "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"; then
             log_success "Pre-migration validation completed successfully"
         else
             log_error "Pre-migration validation failed"
@@ -272,15 +266,13 @@ run_user_team_migration() {
     
     if [[ "$TEST_MODE" == "true" ]]; then
         log "TEST MODE: Would run user & team migration"
-        log "Command: IDENTITY_PROVIDER_MODE=$IDENTITY_PROVIDER_MODE ./copy_cluster_teams_with_full_user_roles.sh \"$SOURCE_API\" \"***\" \"$SOURCE_CLUSTER\" \"$DEST_API\" \"***\" \"$DEST_CLUSTER\""
+        log "Command: ./copy_cluster_teams_with_full_user_roles.sh \"$SOURCE_API\" \"***\" \"$SOURCE_CLUSTER\" \"$DEST_API\" \"***\" \"$DEST_CLUSTER\""
         return 0
     fi
     
     log "Migrating users and teams with role preservation..."
-    log "Identity Provider Mode: $IDENTITY_PROVIDER_MODE"
     
-    if IDENTITY_PROVIDER_MODE="$IDENTITY_PROVIDER_MODE" \
-       ./copy_cluster_teams_with_full_user_roles.sh \
+    if ./copy_cluster_teams_with_full_user_roles.sh \
        "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
        "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"; then
         log_success "User & team migration completed successfully"
@@ -372,7 +364,7 @@ run_post_migration_validation() {
     fi
     
     log "Running comprehensive post-migration validation..."
-    if ../phase1-validation/run_test_suite.sh --mode=post-migration; then
+    if ../phase1-validation/run_test_suite.sh "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"; then
         log_success "Post-migration validation completed successfully"
     else
         log_warning "Post-migration validation found issues (check logs)"

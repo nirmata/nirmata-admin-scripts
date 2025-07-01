@@ -16,7 +16,7 @@ if [ $# -ne 6 ]; then
     echo "Usage: $0 <source_api_endpoint> <source_token> <source_cluster> <dest_api_endpoint> <dest_token> <dest_cluster>"
     echo ""
     echo "Example:"
-    echo "$0 https://staging.nirmata.co TOKEN1 conformance-132 https://pe420.nirmata.co TOKEN2 old-app-migration"
+    echo "$0 https://source.nirmata.co SOURCE_TOKEN source-cluster https://destination.nirmata.co DEST_TOKEN dest-cluster"
     exit 1
 fi
 
@@ -137,6 +137,20 @@ create_user_with_full_profile() {
     
     if [ ! -z "$dest_user_id" ] && [ "$dest_user_id" != "null" ]; then
         log_message "User '$user_email' already exists in destination (ID: $dest_user_id)"
+        
+        # Get user's source roles to merge with existing destination roles
+        local user_data=$(echo "$SOURCE_USERS" | jq -r --arg id "$user_id" '.[] | select(.id == $id)')
+        local source_roles=$(echo "$user_data" | jq -r '.roles[]?.name // empty')
+        local source_role=$(echo "$user_data" | jq -r '.role // "devops"')
+        
+        log_message "🔄 MERGE MODE: Updating existing user roles for $user_email"
+        log_message "Source role: $source_role, Additional roles: $source_roles"
+        
+        # Merge roles for existing user (additive approach)
+        if [ ! -z "$source_roles" ] || [ ! -z "$source_role" ]; then
+            merge_user_roles "$dest_user_id" "$user_email" "$source_role" "$source_roles"
+        fi
+        
         return 0
     fi
     
@@ -242,6 +256,101 @@ create_user_with_full_profile() {
     else
         log_message "❌ Failed to create user '$user_email': $response"
         return 1
+    fi
+}
+
+# Function to merge roles for existing users (additive approach)
+merge_user_roles() {
+    local user_id=$1
+    local user_email=$2
+    local source_primary_role=$3
+    local source_additional_roles=$4
+    
+    log_message "🔄 Merging roles for existing user: $user_email"
+    
+    # Get current user roles from destination
+    local current_user_data=$(echo "$DEST_USERS" | jq -r --arg id "$user_id" '.[] | select(.id == $id)')
+    local current_primary_role=$(echo "$current_user_data" | jq -r '.role // ""')
+    local current_additional_roles=$(echo "$current_user_data" | jq -r '.roles[]?.name // empty')
+    
+    log_message "Current destination roles - Primary: $current_primary_role, Additional: $current_additional_roles"
+    log_message "Source roles to merge - Primary: $source_primary_role, Additional: $source_additional_roles"
+    
+    # Build comprehensive roles list (avoid duplicates)
+    local all_roles=""
+    
+    # Add current primary role if it exists
+    if [ ! -z "$current_primary_role" ] && [ "$current_primary_role" != "null" ]; then
+        all_roles="$current_primary_role"
+    fi
+    
+    # Add source primary role if different from current
+    if [ ! -z "$source_primary_role" ] && [ "$source_primary_role" != "$current_primary_role" ]; then
+        if [ -z "$all_roles" ]; then
+            all_roles="$source_primary_role"
+        else
+            all_roles="$all_roles $source_primary_role"
+        fi
+    fi
+    
+    # Add current additional roles
+    for role in $current_additional_roles; do
+        if [ ! -z "$role" ] && ! echo "$all_roles" | grep -q "\b$role\b"; then
+            all_roles="$all_roles $role"
+        fi
+    done
+    
+    # Add source additional roles
+    for role in $source_additional_roles; do
+        if [ ! -z "$role" ] && ! echo "$all_roles" | grep -q "\b$role\b"; then
+            all_roles="$all_roles $role"
+        fi
+    done
+    
+    # Build roles array for API call
+    local dest_role_ids=""
+    for role_name in $all_roles; do
+        # Handle both object and string role formats
+        local dest_role_id=$(echo "$DEST_ROLES" | jq -r --arg name "$role_name" '
+            if type == "array" then
+                .[] | if type == "object" then 
+                    select(.name == $name) | .id 
+                else 
+                    if . == $name then . else empty end 
+                end
+            else
+                empty
+            end')
+        
+        if [ ! -z "$dest_role_id" ] && [ "$dest_role_id" != "null" ]; then
+            if [ -z "$dest_role_ids" ]; then
+                dest_role_ids="\"$dest_role_id\""
+            else
+                dest_role_ids="$dest_role_ids, \"$dest_role_id\""
+            fi
+            log_message "✅ Including role '$role_name' (ID: $dest_role_id)"
+        else
+            log_message "⚠️  Role '$role_name' not found in destination - skipping"
+        fi
+    done
+    
+    # Update user with merged roles
+    if [ ! -z "$dest_role_ids" ]; then
+        local role_payload="{\"roles\": [$dest_role_ids]}"
+        local role_response=$(curl -s -X PUT \
+            -H "Authorization: NIRMATA-API $DEST_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$role_payload" \
+            "$DEST_API_ENDPOINT/users/api/users/$user_id")
+        
+        if echo "$role_response" | jq -e '.id' > /dev/null 2>&1; then
+            log_message "✅ Merged roles updated for $user_email successfully"
+            log_message "Final roles: $(echo "$all_roles" | tr ' ' ',')"
+        else
+            log_message "❌ Failed to update merged roles for $user_email: $role_response"
+        fi
+    else
+        log_message "⚠️  No valid roles found to assign to $user_email"
     fi
 }
 
@@ -368,9 +477,18 @@ while read -r team_data; do
             log_message "Team '$team_name' already exists (ID: $dest_team_id)"
         fi
         
-        # Associate users to team
-        dest_user_ids=""
-        associated_count=0
+        # Get existing team members (for merge approach)
+        log_message "🔄 MERGE MODE: Getting existing team members for '$team_name'"
+        existing_team_data=$(curl -s -H "Authorization: NIRMATA-API $DEST_TOKEN" \
+            "$DEST_API_ENDPOINT/users/api/teams/$dest_team_id")
+        existing_member_ids=$(echo "$existing_team_data" | jq -r '.users[]?.id // empty')
+        existing_count=$(echo "$existing_member_ids" | wc -w)
+        
+        log_message "Team '$team_name' currently has $existing_count existing members"
+        
+        # Build list of source users to add
+        source_user_ids=""
+        new_members_count=0
         
         for source_user_id in $team_users; do
             user_email=$(echo "$SOURCE_USERS" | jq -r --arg id "$source_user_id" '.[] | select(.id == $id) | .email')
@@ -379,22 +497,53 @@ while read -r team_data; do
                 dest_user_id=$(echo "$DEST_USERS" | jq -r --arg email "$user_email" '.[] | select(.email == $email) | .id')
                 
                 if [ ! -z "$dest_user_id" ] && [ "$dest_user_id" != "null" ]; then
-                    if [ -z "$dest_user_ids" ]; then
-                        dest_user_ids="\"$dest_user_id\""
+                    # Check if user is already a member (avoid duplicates)
+                    if ! echo "$existing_member_ids" | grep -q "\b$dest_user_id\b"; then
+                        if [ -z "$source_user_ids" ]; then
+                            source_user_ids="\"$dest_user_id\""
+                        else
+                            source_user_ids="$source_user_ids, \"$dest_user_id\""
+                        fi
+                        new_members_count=$((new_members_count + 1))
+                        log_message "Will add new member: $user_email (ID: $dest_user_id)"
                     else
-                        dest_user_ids="$dest_user_ids, \"$dest_user_id\""
+                        log_message "User $user_email already member of team '$team_name' - skipping"
                     fi
-                    associated_count=$((associated_count + 1))
-                    log_message "Will associate user $user_email (ID: $dest_user_id) to team $team_name"
                 else
                     log_message "⚠️  User $user_email not found in destination for team association"
                 fi
             fi
         done
         
-        # Update team with users
-        if [ ! -z "$dest_user_ids" ]; then
-            team_update_payload="{\"users\": [$dest_user_ids]}"
+        # Combine existing and new members
+        all_member_ids=""
+        total_members=0
+        
+        # Add existing members
+        for member_id in $existing_member_ids; do
+            if [ ! -z "$member_id" ]; then
+                if [ -z "$all_member_ids" ]; then
+                    all_member_ids="\"$member_id\""
+                else
+                    all_member_ids="$all_member_ids, \"$member_id\""
+                fi
+                total_members=$((total_members + 1))
+            fi
+        done
+        
+        # Add new members
+        if [ ! -z "$source_user_ids" ]; then
+            if [ -z "$all_member_ids" ]; then
+                all_member_ids="$source_user_ids"
+            else
+                all_member_ids="$all_member_ids, $source_user_ids"
+            fi
+            total_members=$((total_members + new_members_count))
+        fi
+        
+        # Update team with merged membership
+        if [ ! -z "$all_member_ids" ]; then
+            team_update_payload="{\"users\": [$all_member_ids]}"
             team_update_response=$(curl -s -X PUT \
                 -H "Authorization: NIRMATA-API $DEST_TOKEN" \
                 -H "Content-Type: application/json" \
@@ -402,14 +551,14 @@ while read -r team_data; do
                 "$DEST_API_ENDPOINT/users/api/teams/$dest_team_id")
             
             if echo "$team_update_response" | jq -e '.id' > /dev/null 2>&1; then
-                log_message "✅ $associated_count users associated to team '$team_name'"
+                log_message "✅ Team '$team_name' updated: $existing_count existing + $new_members_count new = $total_members total members"
                 SUCCESSFUL_TEAMS=$((SUCCESSFUL_TEAMS + 1))
             else
-                log_message "❌ Failed to associate users to team '$team_name': $team_update_response"
+                log_message "❌ Failed to update team '$team_name': $team_update_response"
                 FAILED_TEAMS=$((FAILED_TEAMS + 1))
             fi
         else
-            log_message "⚠️  No users available to associate to team '$team_name'"
+            log_message "⚠️  No members to add to team '$team_name'"
             SUCCESSFUL_TEAMS=$((SUCCESSFUL_TEAMS + 1))
         fi
         

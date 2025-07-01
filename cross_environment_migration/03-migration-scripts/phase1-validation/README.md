@@ -12,9 +12,25 @@
 - Verifies identity provider compatibility
 - Tests team structure compatibility
 
+**Arguments**: Requires 6 arguments in this order:
+1. `source_api_endpoint` - Source Nirmata API URL
+2. `source_token` - Source API token
+3. `source_cluster` - Source cluster name
+4. `dest_api_endpoint` - Destination Nirmata API URL
+5. `dest_token` - Destination API token
+6. `dest_cluster` - Destination cluster name
+
 **Usage**:
 ```bash
-./run_test_suite.sh --mode=pre-migration
+# Direct script call
+./run_test_suite.sh \
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
+
+# Or run via RUN_THIS_PHASE.sh
+./RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
 ```
 
 ### `test_identity_provider_compatibility.sh`
@@ -23,9 +39,13 @@
 - Tests Azure AD compatibility
 - Validates Local authentication fallback
 
+**Arguments**: Same 6 arguments as above
+
 **Usage**:
 ```bash
-./test_identity_provider_compatibility.sh
+./test_identity_provider_compatibility.sh \
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
 ```
 
 ### `simulate_perfect_migration.sh`
@@ -34,9 +54,13 @@
 - Identifies potential issues before actual migration
 - Provides migration preview and estimates
 
+**Arguments**: Same 6 arguments as above
+
 **Usage**:
 ```bash
-./simulate_perfect_migration.sh
+./simulate_perfect_migration.sh \
+  "https://source.nirmata.co" "SOURCE_TOKEN" "source-cluster" \
+  "https://destination.nirmata.co" "DEST_TOKEN" "dest-cluster"
 ```
 
 ## ✅ Success Criteria
@@ -57,4 +81,4 @@ Phase 1 is successful when:
 ## 📋 Next Steps
 
 After Phase 1 succeeds, proceed to:
-**Phase 2**: `../phase2-environments/` 
+**Phase 2**: `../phase2-users-teams/` 

@@ -37,18 +37,39 @@
 
 ## 🎯 **RECOMMENDED EXECUTION**
 
-### **One-by-One Approach** (Recommended for Production)
+### **Arguments-Only Approach** (All Scripts Use 6 Arguments)
 ```bash
-cd 03-migration-scripts/phase1-validation && ./RUN_THIS_PHASE.sh
-cd ../phase2-users-teams && ./RUN_THIS_PHASE.sh
-cd ../phase3-environments && ./RUN_THIS_PHASE.sh
-cd ../phase4-applications && ./RUN_THIS_PHASE.sh
-cd ../phase5-verification && ./RUN_THIS_PHASE.sh
+# Phase 1: Pre-Migration Validation
+./03-migration-scripts/phase1-validation/RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
+
+# Phase 2: User & Team Migration
+./03-migration-scripts/phase2-users-teams/RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
+
+# Phase 3: Environment Migration
+./03-migration-scripts/phase3-environments/RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
+
+# Phase 4: Application Migration
+./03-migration-scripts/phase4-applications/RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
+
+# Phase 5: Post-Migration Verification
+./03-migration-scripts/phase5-verification/RUN_THIS_PHASE.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
 ```
 
-### **Full Automation** (Use with caution)
+### **Full Automation** (Alternative)
 ```bash
-cd ../../ && ./complete_migration_workflow.sh
+./complete_migration_workflow.sh \
+  "https://source.nirmata.co" "source_token" "source_cluster" \
+  "https://dest.nirmata.co" "dest_token" "dest_cluster"
 ```
 
 ## 📝 **PHASE DEPENDENCIES**
@@ -96,7 +117,7 @@ Validate  Envs     Users     Apps      Verify
 
 **When to use**: Before starting any migration to ensure environments are ready
 
-### 🏗️ **Phase 2: Environments** (`phase2-environments/`)
+### 🏗️ **Phase 3: Environments** (`phase3-environments/`)
 **Purpose**: Migrate environment settings, policies, and team permissions
 - `restore_env_settings_cross_env.sh` - Complete environment migration
 
@@ -106,7 +127,7 @@ Validate  Envs     Users     Apps      Verify
 - Policies and settings
 - Environment metadata
 
-### 👥 **Phase 3: Users & Teams** (`phase3-users-teams/`)
+### 👥 **Phase 2: Users & Teams** (`phase2-users-teams/`)
 **Purpose**: Migrate users and teams with role preservation
 - `copy_cluster_teams_with_full_user_roles.sh` - Complete user/team migration
 - `copy_cluster_teams_with_roles.sh` - Alternative team migration
@@ -146,13 +167,13 @@ Validate  Envs     Users     Apps      Verify
 # Phase 1: Validation
 ./03-migration-scripts/phase1-validation/run_test_suite.sh
 
-# Phase 2: Environments
-./03-migration-scripts/phase2-environments/restore_env_settings_cross_env.sh \
+# Phase 2: User & Team Migration
+./03-migration-scripts/phase2-users-teams/copy_cluster_teams_with_full_user_roles.sh \
   "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
   "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
 
-# Phase 3: Users & Teams
-./03-migration-scripts/phase3-users-teams/copy_cluster_teams_with_full_user_roles.sh \
+# Phase 3: Environment Migration
+./03-migration-scripts/phase3-environments/restore_env_settings_cross_env.sh \
   "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
   "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
 
