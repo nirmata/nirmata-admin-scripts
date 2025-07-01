@@ -151,6 +151,29 @@ log "Destination Cluster: $DEST_CLUSTER"
 log "Migration Mode: $MIGRATION_MODE"
 log "Test Mode: $TEST_MODE"
 
+# Setup comprehensive logging
+LOG_DIR="06-logs"
+mkdir -p "$LOG_DIR"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+WORKFLOW_LOG="$LOG_DIR/complete_migration_workflow_${TIMESTAMP}.log"
+WORKFLOW_SUMMARY="$LOG_DIR/complete_migration_summary_${TIMESTAMP}.log"
+
+# Enhanced logging function that writes to both console and file
+workflow_log() {
+    local message="$1"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $message" | tee -a "$WORKFLOW_LOG"
+}
+
+# Start workflow logging
+workflow_log "=== Complete Migration Workflow Started ==="
+workflow_log "Source: $SOURCE_API ($SOURCE_CLUSTER)"
+workflow_log "Destination: $DEST_API ($DEST_CLUSTER)"
+workflow_log "Mode: $MIGRATION_MODE, Test: $TEST_MODE"
+workflow_log "Timestamp: $TIMESTAMP"
+
+log "📄 Workflow Log: $WORKFLOW_LOG"
+log "📄 Summary: $WORKFLOW_SUMMARY"
+
 if [[ "$TEST_MODE" == "true" ]]; then
     log_warning "Running in TEST MODE - no actual changes will be made"
 fi

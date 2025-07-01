@@ -74,6 +74,42 @@ Phase 2 is successful when:
 - Identity providers are handled correctly
 - No authentication errors occur
 
+## 📊 **Comprehensive Logging**
+
+Phase 2 automatically creates detailed logs for audit and troubleshooting:
+
+### **📁 Log Files Created**
+- **Detailed Log**: `../../06-logs/phase2_users_teams_TIMESTAMP.log`
+  - Complete console output with timestamps
+  - All API requests and responses
+  - User and team creation details
+  - Role merging decisions and conflicts
+
+- **Summary Log**: `../../06-logs/phase2_users_teams_summary_TIMESTAMP.log`
+  - Migration statistics (users/teams migrated)
+  - Success/failure status
+  - Key metrics for reporting
+  - Next steps and troubleshooting guidance
+
+### **📋 Example Log Output**
+```bash
+📄 Log file: ../../06-logs/phase2_users_teams_20250701_143022.log
+📄 Summary: ../../06-logs/phase2_users_teams_summary_20250701_143022.log
+
+Migration Results:
+✅ Users migrated: 13
+✅ Teams migrated: 3
+✅ Roles preserved with merge logic
+✅ Identity providers handled correctly
+```
+
+### **🔍 What Gets Logged**
+- User creation/update operations
+- Role merging decisions (existing + new roles)
+- Team membership changes
+- Identity provider handling
+- API errors and troubleshooting information
+
 ## 📋 Expected Output
 
 ```

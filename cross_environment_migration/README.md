@@ -144,6 +144,80 @@ graph LR
 - Git credentials available in destination environment
 - Sufficient API rate limits for migration volume
 
+## 📊 **Comprehensive Logging & Audit Trail**
+
+Every script automatically creates detailed logs for enterprise compliance and troubleshooting:
+
+### **📁 Log File Structure**
+```
+06-logs/
+├── 📋 Phase Logs (Detailed + Summary)
+│   ├── phase1_validation_TIMESTAMP.log
+│   ├── phase1_validation_summary_TIMESTAMP.log
+│   ├── phase2_users_teams_TIMESTAMP.log
+│   ├── phase2_users_teams_summary_TIMESTAMP.log
+│   ├── phase3_environments_TIMESTAMP.log
+│   ├── phase3_environments_summary_TIMESTAMP.log
+│   ├── phase4_applications_TIMESTAMP.log
+│   ├── phase4_applications_summary_TIMESTAMP.log
+│   ├── phase5_verification_TIMESTAMP.log
+│   ├── phase5_verification_summary_TIMESTAMP.log
+│   └── migration_final_report_TIMESTAMP.log
+│
+├── 📱 Individual Script Logs
+│   ├── full_user_migration_TIMESTAMP.log
+│   ├── env_restore_cross_env_TIMESTAMP.log
+│   ├── migration_TIMESTAMP.log
+│   └── catalog_reference_update_cross_env_TIMESTAMP.log
+│
+└── 🚀 Complete Workflow Logs
+    ├── complete_migration_workflow_TIMESTAMP.log
+    └── complete_migration_summary_TIMESTAMP.log
+```
+
+### **📊 What Each Log Contains**
+
+#### **Detailed Logs** (`.log` files):
+- ✅ **Complete console output** with precise timestamps
+- ✅ **All API responses** and error messages
+- ✅ **Step-by-step progress** for each migration phase
+- ✅ **Technical details** for troubleshooting
+
+#### **Summary Logs** (`_summary.log` files):
+- ✅ **Migration statistics** (users, teams, environments, apps)
+- ✅ **Success/failure status** with clear indicators
+- ✅ **Key metrics and counts** for reporting
+- ✅ **Next steps** and troubleshooting guidance
+
+#### **Final Report** (`migration_final_report.log`):
+- ✅ **Complete migration overview** with all phases
+- ✅ **Final verification results** and success rate
+- ✅ **Production readiness assessment**
+- ✅ **Audit trail** for compliance documentation
+
+### **🎯 Key Logging Features**
+
+- **🔄 Automatic**: No configuration needed - logs created automatically
+- **📅 Timestamped**: Every entry has precise date/time stamps
+- **📺 Dual Output**: Both console display and file logging
+- **📋 Structured**: Easy-to-read summaries for quick status checks
+- **🔍 Detailed**: Complete technical information for troubleshooting
+- **📊 Metrics**: Migration statistics and performance data
+- **🏢 Enterprise**: Full audit trail for compliance requirements
+
+### **📋 Example Log Output**
+```bash
+# Each phase shows log file locations
+📄 Log file: 06-logs/phase2_users_teams_20250701_143022.log
+📄 Summary: 06-logs/phase2_users_teams_summary_20250701_143022.log
+
+# Summary contains key metrics
+✅ Users migrated: 13
+✅ Teams migrated: 3
+✅ Roles preserved with merge logic
+✅ Identity providers handled correctly
+```
+
 ## 🎉 **Success Stories**
 
 This toolkit has successfully migrated:

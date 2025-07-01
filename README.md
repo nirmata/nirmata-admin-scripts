@@ -16,8 +16,8 @@ This repository contains essential administrative scripts and utilities for Nirm
 - **environment_permissions/** - Scripts for managing and checking environment permissions
 - **backup-restore/** - Scripts for backup and restore operations of Nirmata components
 - **validate-kyverno/** - Scripts and utilities for validating Kyverno policies and health checks
-- **cross_environment_migration/** - Complete workflow and scripts for cross-environment migration
-- **collect-nirmata-services-logs/** - Scripts and utilities for collecting Nirmata service logs
+- **cross_environment_migration/** - Complete workflow scripts for cross-environment migration operations
+- **collect-nirmata-services-logs/** - Scripts for collecting Nirmata service logs and diagnostics
 
 ## Usage
 
