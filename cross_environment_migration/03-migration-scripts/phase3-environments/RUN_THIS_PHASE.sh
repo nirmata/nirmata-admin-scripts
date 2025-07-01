@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# 👥 Phase 3: User & Team Migration
-# Run this script to migrate users and teams with role preservation
+# 🏗️ Phase 3: Environment Migration
+# Run this script to migrate environment settings and team permissions
 
 set -e
 
-echo "👥 Phase 3: User & Team Migration"
+echo "🏗️ Phase 3: Environment Migration"
 echo "================================="
 echo ""
 
@@ -21,7 +21,6 @@ if [[ -z "$SOURCE_API" || -z "$DEST_API" ]]; then
         echo "✅ Configuration loaded successfully"
         echo "   Source: $SOURCE_API ($SOURCE_CLUSTER)"
         echo "   Destination: $DEST_API ($DEST_CLUSTER)"
-        echo "   Identity Provider Mode: $IDENTITY_PROVIDER_MODE"
         echo ""
     else
         echo "❌ Configuration file not found: $CONFIG_FILE"
@@ -35,25 +34,23 @@ if [[ -z "$SOURCE_API" || -z "$DEST_API" ]]; then
     fi
 fi
 
-echo "👥 Migrating users and teams with role preservation..."
+echo "🏗️ Migrating environment settings and team permissions..."
 echo ""
 
-# Run the user & team migration
-if IDENTITY_PROVIDER_MODE="$IDENTITY_PROVIDER_MODE" \
-   ./copy_cluster_teams_with_full_user_roles.sh \
+# Run the environment migration
+if ./restore_env_settings_cross_env.sh \
    "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
    "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"; then
     echo ""
     echo "✅ Phase 3 completed successfully!"
     echo ""
-    echo "📋 Next Step: Run Phase 4a"
+    echo "📋 Next Step: Run Phase 4"
     echo "   cd ../phase4-applications"
     echo "   ./RUN_THIS_PHASE.sh"
     echo ""
     echo "💡 Verify in destination UI:"
-    echo "   - Check that users were created with correct roles"
-    echo "   - Verify teams have proper memberships"
-    echo "   - Test user login (if using SAML/Azure AD)"
+    echo "   - Check that environments were created"
+    echo "   - Verify team permissions are in place"
 else
     echo ""
     echo "❌ Phase 3 failed!"
@@ -65,11 +62,8 @@ else
     echo "4. Run this script again"
     echo ""
     echo "Common issues:"
-    echo "- User invitation failures (production environment restrictions)"
-    echo "- Identity provider mismatches (configure SAML/Azure AD first)"
-    echo "- Role assignment errors (check required roles in destination)"
-    echo ""
-    echo "💡 Try using convert mode if identity provider issues persist:"
-    echo "   Edit migration_config.sh and set: IDENTITY_PROVIDER_MODE=\"convert\""
+    echo "- Insufficient permissions to create environments"
+    echo "- Team role bindings not supported (system clusters)"
+    echo "- Environment naming conflicts"
     exit 1
 fi 

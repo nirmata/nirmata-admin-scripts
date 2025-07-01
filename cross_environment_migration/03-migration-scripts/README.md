@@ -1,6 +1,82 @@
 # 🚀 Migration Scripts - 5-Phase Approach
 
-This directory contains all migration scripts organized by the **5-phase migration workflow**. Each phase must be completed in order for successful migration.
+## 📋 **MIGRATION PHASES**
+
+### **Phase 1: Validation** 📋
+**Location:** `phase1-validation/`
+- Pre-migration validation and testing
+- Identity provider compatibility checks
+- Connection testing to both environments
+- **Run:** `cd phase1-validation && ./RUN_THIS_PHASE.sh`
+
+### **Phase 2: Users & Teams** 👥
+**Location:** `phase2-users-teams/`
+- Migrates all users with proper identity provider settings
+- Creates all teams with correct permissions
+- **Run:** `cd phase2-users-teams && ./RUN_THIS_PHASE.sh`
+
+### **Phase 3: Environments** 🏗️
+**Location:** `phase3-environments/`
+- Restores environment settings and configurations
+- Associates teams with proper environment permissions
+- **Run:** `cd phase3-environments && ./RUN_THIS_PHASE.sh`
+
+### **Phase 4: Applications** 📱
+**Location:** `phase4-applications/`
+- Migrates applications from environments to catalog
+- Updates catalog references across applications
+- **Run:** `cd phase4-applications && ./RUN_THIS_PHASE.sh`
+
+### **Phase 5: Verification** ✅
+**Location:** `phase5-verification/`
+- Post-migration validation and testing
+- Verifies all components migrated successfully
+- **Run:** `cd phase5-verification && ./RUN_THIS_PHASE.sh`
+
+
+
+## 🎯 **RECOMMENDED EXECUTION**
+
+### **One-by-One Approach** (Recommended for Production)
+```bash
+cd 03-migration-scripts/phase1-validation && ./RUN_THIS_PHASE.sh
+cd ../phase2-users-teams && ./RUN_THIS_PHASE.sh
+cd ../phase3-environments && ./RUN_THIS_PHASE.sh
+cd ../phase4-applications && ./RUN_THIS_PHASE.sh
+cd ../phase5-verification && ./RUN_THIS_PHASE.sh
+```
+
+### **Full Automation** (Use with caution)
+```bash
+cd ../../ && ./complete_migration_workflow.sh
+```
+
+## 📝 **PHASE DEPENDENCIES**
+
+- **Phase 1** → No dependencies
+- **Phase 2** → Requires Phase 1 validation
+- **Phase 3** → Requires Phase 2
+- **Phase 4** → Requires Phase 3 (environments must exist)
+- **Phase 5** → Requires all previous phases
+
+## 🔍 **VERIFICATION**
+
+After each phase, check the logs for successful completion:
+```bash
+# Check phase completion
+ls -la 06-logs/phase*_*.log
+
+# View latest logs
+tail -n 20 06-logs/phase*_*.log
+```
+
+## 🆘 **TROUBLESHOOTING**
+
+If any phase fails:
+1. Check the corresponding log file in `06-logs/`
+2. Verify API connectivity and tokens
+3. Ensure source environment has the expected resources
+4. Re-run the failed phase after resolving issues
 
 ## 📋 Migration Flow
 

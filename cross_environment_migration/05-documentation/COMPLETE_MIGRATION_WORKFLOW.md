@@ -58,27 +58,11 @@ cd 03-migration-scripts/phase1-validation
 ./run_test_suite.sh
 ```
 
-### **Phase 2: Environment & Settings Migration**
+### **Phase 2: User & Team Migration**
 
-#### Step 2.1: Restore Environment Settings
+#### Step 2.1: Migrate Users & Teams with Profiles
 ```bash
-cd ../phase2-environments
-./restore_env_settings_cross_env.sh \
-  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
-  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
-```
-
-**What this does:**
-- ✅ Copies environment configurations
-- ✅ Restores environment policies
-- ✅ Migrates team role bindings (if supported)
-- ✅ Preserves environment metadata
-
-### **Phase 3: User & Team Migration**
-
-#### Step 3.1: Migrate Users & Teams with Profiles
-```bash
-cd ../phase3-users-teams
+cd ../phase2-users-teams
 
 # Use preserve mode (recommended for customer environments)
 IDENTITY_PROVIDER_MODE=preserve ./copy_cluster_teams_with_full_user_roles.sh \
@@ -92,6 +76,22 @@ IDENTITY_PROVIDER_MODE=preserve ./copy_cluster_teams_with_full_user_roles.sh \
 - ⚠️ Converts identity providers only if destination doesn't support them
 - ✅ Creates teams with proper user associations
 - ✅ Maintains team memberships and permissions
+
+### **Phase 3: Environment & Settings Migration**
+
+#### Step 3.1: Restore Environment Settings
+```bash
+cd ../phase3-environments
+./restore_env_settings_cross_env.sh \
+  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
+  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
+```
+
+**What this does:**
+- ✅ Copies environment configurations
+- ✅ Restores environment policies
+- ✅ Migrates team role bindings
+- ✅ Preserves environment metadata
 
 ### **Phase 4: Application Migration**
 
@@ -167,17 +167,17 @@ echo "📋 Phase 1: Pre-Migration Validation"
 cd 03-migration-scripts/phase1-validation
 ./run_test_suite.sh || exit 1
 
-# Phase 2: Environment Migration
-echo "🏗️ Phase 2: Environment & Settings Migration"
-cd ../phase2-environments
-./restore_env_settings_cross_env.sh \
+# Phase 2: User & Team Migration
+echo "👥 Phase 2: User & Team Migration"
+cd ../phase2-users-teams
+IDENTITY_PROVIDER_MODE=preserve ./copy_cluster_teams_with_full_user_roles.sh \
   "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
   "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER" || exit 1
 
-# Phase 3: User & Team Migration
-echo "👥 Phase 3: User & Team Migration"
-cd ../phase3-users-teams
-IDENTITY_PROVIDER_MODE=preserve ./copy_cluster_teams_with_full_user_roles.sh \
+# Phase 3: Environment Migration
+echo "🏗️ Phase 3: Environment & Settings Migration"
+cd ../phase3-environments
+./restore_env_settings_cross_env.sh \
   "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
   "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER" || exit 1
 

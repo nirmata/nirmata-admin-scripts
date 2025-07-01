@@ -5,16 +5,16 @@
 # ================================
 # SOURCE ENVIRONMENT CONFIGURATION
 # ================================
-export SOURCE_API="https://your-source.nirmata.co"
-export SOURCE_TOKEN="your_source_api_token_here"
-export SOURCE_CLUSTER="source-cluster-name"
+export SOURCE_API="https://staging.nirmata.co"
+export SOURCE_TOKEN="c7/tRvOi3shNloGDjtWABf/KKckLjeNNf7q1N81uTrAMA7YXxuJ43prRuQYjR4RRFssLshsT39SxvlWIeRKNIg=="
+export SOURCE_CLUSTER="conformance-132"
 
 # ================================
 # DESTINATION ENVIRONMENT CONFIGURATION
 # ================================
-export DEST_API="https://your-dest.nirmata.co"
-export DEST_TOKEN="your_destination_api_token_here"
-export DEST_CLUSTER="destination-cluster-name"
+export DEST_API="https://pe420.nirmata.co"
+export DEST_TOKEN="W6mdT3taq2nkLxmmJFyHfpMzrUeow0HTeQQx3/n7lvXfJYyT7l+Rd3oaSwR7NJyyRhnOQWF7nH1aNHYsEJURZg=="
+export DEST_CLUSTER="old-app-migration"
 
 # ================================
 # MIGRATION SETTINGS

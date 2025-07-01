@@ -84,17 +84,17 @@ run_test "TC-I02" "Destination identity provider detection" \
 # Test 3: Error Handling Tests
 echo -e "\n📋 CATEGORY 3: ERROR HANDLING TESTS"
 run_test "TC-E01" "Invalid source token handling" \
-    "./copy_cluster_teams_with_full_user_roles.sh '$SOURCE_API' 'INVALID_TOKEN' '$SOURCE_CLUSTER' '$DEST_API' '$DEST_TOKEN' '$DEST_CLUSTER' 2>&1 | head -10" \
+    "../phase2-users-teams/copy_cluster_teams_with_full_user_roles.sh '$SOURCE_API' 'INVALID_TOKEN' '$SOURCE_CLUSTER' '$DEST_API' '$DEST_TOKEN' '$DEST_CLUSTER' 2>&1 | head -10" \
     "Cannot index string"
 
 run_test "TC-E03" "Non-existent source cluster handling" \
-    "./copy_cluster_teams_with_full_user_roles.sh '$SOURCE_API' '$SOURCE_TOKEN' 'NON_EXISTENT' '$DEST_API' '$DEST_TOKEN' '$DEST_CLUSTER' 2>&1 | head -10" \
+    "../phase2-users-teams/copy_cluster_teams_with_full_user_roles.sh '$SOURCE_API' '$SOURCE_TOKEN' 'NON_EXISTENT' '$DEST_API' '$DEST_TOKEN' '$DEST_CLUSTER' 2>&1 | head -10" \
     "ERROR: Source cluster 'NON_EXISTENT' not found"
 
 # Test 4: Configuration Mode Tests
 echo -e "\n📋 CATEGORY 4: CONFIGURATION MODE TESTS"
 run_test "TC-C01" "Identity provider mode preserve" \
-    "IDENTITY_PROVIDER_MODE=preserve ./copy_cluster_teams_with_full_user_roles.sh '$SOURCE_API' '$SOURCE_TOKEN' '$SOURCE_CLUSTER' '$DEST_API' '$DEST_TOKEN' '$DEST_CLUSTER' 2>&1 | head -20" \
+    "IDENTITY_PROVIDER_MODE=preserve ../phase2-users-teams/copy_cluster_teams_with_full_user_roles.sh '$SOURCE_API' '$SOURCE_TOKEN' '$SOURCE_CLUSTER' '$DEST_API' '$DEST_TOKEN' '$DEST_CLUSTER' 2>&1 | head -20" \
     "CRITICAL WARNING.*SAML users"
 
 # Test 5: User Profile Validation
@@ -116,7 +116,7 @@ run_test "TC-T01" "Team creation validation" \
 # Test 7: Script Parameter Validation
 echo -e "\n📋 CATEGORY 7: PARAMETER VALIDATION TESTS"
 run_test "TC-P01" "Missing parameters handling" \
-    "./copy_cluster_teams_with_full_user_roles.sh 2>&1 || true" \
+    "../phase2-users-teams/copy_cluster_teams_with_full_user_roles.sh 2>&1 || true" \
     "Usage:"
 
 # Final Results

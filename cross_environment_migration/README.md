@@ -19,8 +19,8 @@ This toolkit is organized into **numbered folders** that guide you through the m
 │
 ├── 📂 03-migration-scripts/        👈 MIGRATION PHASES (Run One by One)
 │   ├── 📋 phase1-validation/          # Pre-migration testing
-│   ├── 🏗️ phase2-environments/        # Environment migration
-│   ├── 👥 phase3-users-teams/         # User & team migration
+│   ├── 👥 phase2-users-teams/         # User & team migration
+│   ├── 🏗️ phase3-environments/        # Environment migration
 │   ├── 📱 phase4-applications/        # Application migration
 │   └── ✅ phase5-verification/        # Post-migration validation
 │
@@ -58,10 +58,10 @@ nano migration_config.sh
 cd ../03-migration-scripts/phase1-validation
 ./RUN_THIS_PHASE.sh
 
-cd ../phase2-environments
+cd ../phase2-users-teams
 ./RUN_THIS_PHASE.sh
 
-cd ../phase3-users-teams
+cd ../phase3-environments
 ./RUN_THIS_PHASE.sh
 
 cd ../phase4-applications
@@ -111,25 +111,25 @@ cd ../03-migration-scripts/phase1-validation
 **What it does**: Tests connectivity, authentication, and compatibility
 **Check**: All tests must pass before proceeding
 
-##### **🏗️ Phase 2: Environment Migration**
+##### **👥 Phase 2: User & Team Migration**
 ```bash
-cd ../phase2-environments
-./restore_env_settings_cross_env.sh \
-  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
-  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
-```
-**What it does**: Migrates environment settings and team permissions
-**Check**: Review logs for successful environment creation
-
-##### **👥 Phase 3: User & Team Migration**
-```bash
-cd ../phase3-users-teams
+cd ../phase2-users-teams
 ./copy_cluster_teams_with_full_user_roles.sh \
   "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
   "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
 ```
 **What it does**: Migrates users and teams with role preservation
 **Check**: Verify users and teams created successfully
+
+##### **🏗️ Phase 3: Environment Migration**
+```bash
+cd ../phase3-environments
+./restore_env_settings_cross_env.sh \
+  "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
+  "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"
+```
+**What it does**: Migrates environment settings and team permissions
+**Check**: Review logs for successful environment creation
 
 ##### **📱 Phase 4a: Application Migration**
 ```bash
@@ -162,15 +162,15 @@ cd ../phase5-verification
 
 ```mermaid
 graph LR
-    A[📋 Phase 1<br/>Validation] --> B[🏗️ Phase 2<br/>Environments]
-    B --> C[👥 Phase 3<br/>Users & Teams]
+    A[📋 Phase 1<br/>Validation] --> B[👥 Phase 2<br/>Users & Teams]
+    B --> C[🏗️ Phase 3<br/>Environments]
     C --> D[📱 Phase 4a<br/>Applications]
     D --> E[🔗 Phase 4b<br/>References]
     E --> F[✅ Phase 5<br/>Verification]
     
     A1[Test Connectivity<br/>Check Compatibility] --> A
-    B1[Environment Settings<br/>Team Permissions] --> B
-    C1[User Profiles<br/>Role Preservation] --> C
+    B1[User Profiles<br/>Role Preservation] --> B
+    C1[Environment Settings<br/>Team Permissions] --> C
     D1[Git → Catalog<br/>Convert Apps] --> D
     E1[Update References<br/>Link Applications] --> E
     F1[Validate Success<br/>Generate Report] --> F

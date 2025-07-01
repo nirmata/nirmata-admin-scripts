@@ -2,7 +2,7 @@
 
 # 🚀 Complete Cross-Environment Migration Workflow
 # This script performs end-to-end migration between different Nirmata environments
-# Following the 5-phase approach: Pre-Migration → Environment → User/Team → Application → Validation
+# Following the 5-phase approach: Pre-Migration → User/Team → Environment → Application → Validation
 
 set -e  # Exit on any error
 
@@ -200,8 +200,8 @@ check_prerequisites() {
     # Check required scripts
     local required_scripts=(
         "03-migration-scripts/phase1-validation/run_test_suite.sh"
-        "03-migration-scripts/phase2-environments/restore_env_settings_cross_env.sh"
-        "03-migration-scripts/phase3-users-teams/copy_cluster_teams_with_full_user_roles.sh"
+        "03-migration-scripts/phase2-users-teams/copy_cluster_teams_with_full_user_roles.sh"
+        "03-migration-scripts/phase3-environments/restore_env_settings_cross_env.sh"
         "03-migration-scripts/phase4-applications/migrate_env_apps_to_catalog_cross_env.sh"
         "03-migration-scripts/phase4-applications/update_catalog_references_cross_env.sh"
     )
@@ -264,34 +264,11 @@ run_pre_migration_validation() {
     fi
 }
 
-# Phase 2: Environment Migration
-run_environment_migration() {
-    log_phase "🏗️ Phase 2: Environment & Settings Migration"
-    
-    cd "$SCRIPT_DIR/03-migration-scripts/phase2-environments"
-    
-    if [[ "$TEST_MODE" == "true" ]]; then
-        log "TEST MODE: Would run environment migration"
-        log "Command: ./restore_env_settings_cross_env.sh \"$SOURCE_API\" \"***\" \"$SOURCE_CLUSTER\" \"$DEST_API\" \"***\" \"$DEST_CLUSTER\""
-        return 0
-    fi
-    
-    log "Migrating environment settings and team permissions..."
-    if ./restore_env_settings_cross_env.sh \
-       "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
-       "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"; then
-        log_success "Environment migration completed successfully"
-    else
-        log_error "Environment migration failed"
-        exit 1
-    fi
-}
-
-# Phase 3: User & Team Migration
+# Phase 2: User & Team Migration
 run_user_team_migration() {
-    log_phase "👥 Phase 3: User & Team Migration"
+    log_phase "👥 Phase 2: User & Team Migration"
     
-    cd "$SCRIPT_DIR/03-migration-scripts/phase3-users-teams"
+    cd "$SCRIPT_DIR/03-migration-scripts/phase2-users-teams"
     
     if [[ "$TEST_MODE" == "true" ]]; then
         log "TEST MODE: Would run user & team migration"
@@ -309,6 +286,29 @@ run_user_team_migration() {
         log_success "User & team migration completed successfully"
     else
         log_error "User & team migration failed"
+        exit 1
+    fi
+}
+
+# Phase 3: Environment Migration
+run_environment_migration() {
+    log_phase "🏗️ Phase 3: Environment & Settings Migration"
+    
+    cd "$SCRIPT_DIR/03-migration-scripts/phase3-environments"
+    
+    if [[ "$TEST_MODE" == "true" ]]; then
+        log "TEST MODE: Would run environment migration"
+        log "Command: ./restore_env_settings_cross_env.sh \"$SOURCE_API\" \"***\" \"$SOURCE_CLUSTER\" \"$DEST_API\" \"***\" \"$DEST_CLUSTER\""
+        return 0
+    fi
+    
+    log "Migrating environment settings and team permissions..."
+    if ./restore_env_settings_cross_env.sh \
+       "$SOURCE_API" "$SOURCE_TOKEN" "$SOURCE_CLUSTER" \
+       "$DEST_API" "$DEST_TOKEN" "$DEST_CLUSTER"; then
+        log_success "Environment migration completed successfully"
+    else
+        log_error "Environment migration failed"
         exit 1
     fi
 }
@@ -427,18 +427,18 @@ run_selective_migration() {
             run_application_migration
             ;;
         4)
-            run_environment_migration
             run_user_team_migration
+            run_environment_migration
             run_application_migration
             ;;
         5)
             echo "Custom selection:"
-            read -p "Migrate environments? (y/n): " env_choice
             read -p "Migrate users & teams? (y/n): " user_choice
+            read -p "Migrate environments? (y/n): " env_choice
             read -p "Migrate applications? (y/n): " app_choice
             
-            [[ "$env_choice" =~ ^[Yy] ]] && run_environment_migration
             [[ "$user_choice" =~ ^[Yy] ]] && run_user_team_migration
+            [[ "$env_choice" =~ ^[Yy] ]] && run_environment_migration
             [[ "$app_choice" =~ ^[Yy] ]] && run_application_migration
             ;;
         *)
@@ -462,11 +462,11 @@ main() {
     if [[ "$MIGRATION_MODE" == "selective" ]]; then
         run_selective_migration
     else
-        # Phase 2: Environment Migration
-        run_environment_migration
-        
-        # Phase 3: User & Team Migration
+        # Phase 2: User & Team Migration
         run_user_team_migration
+        
+        # Phase 3: Environment Migration
+        run_environment_migration
         
         # Phase 4: Application Migration
         run_application_migration
