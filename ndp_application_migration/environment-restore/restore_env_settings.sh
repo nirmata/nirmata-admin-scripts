@@ -1,8 +1,26 @@
 #!/bin/bash
 
 # Check if required parameters are provided
-if [ "$#" -ne 4 ]; then
-    echo "Usage: $0 <api_endpoint> <token> <source_cluster> <destination_cluster>"
+if [ "$#" -lt 4 ]; then
+    echo "Usage: $0 <api_endpoint> <token> <source_cluster> <destination_cluster> [OPTIONS]"
+    echo ""
+    echo "Safety Options:"
+    echo "  --dry-run                    Show what would be done without making changes (DEFAULT)"
+    echo "  --live                       Make actual changes (DANGEROUS - use with caution)"
+    echo "  --auto-confirm              Skip confirmation prompts"
+    echo "  --verbose                   Show detailed API responses"
+    echo ""
+    echo "🛡️  SAFE WORKFLOW (RECOMMENDED):"
+    echo "  1. $0 ... --dry-run          # Preview what will happen (DEFAULT)"
+    echo "  2. Review the output carefully"
+    echo "  3. $0 ... --live             # Execute actual changes"
+    echo ""
+    echo "Examples:"
+    echo "  # Step 1: Preview changes (SAFE - DEFAULT)"
+    echo "  $0 https://api.co TOKEN1 source-cluster dest-cluster"
+    echo ""
+    echo "  # Step 2: Execute changes (CONTROLLED)"
+    echo "  $0 https://api.co TOKEN1 source-cluster dest-cluster --live"
     exit 1
 fi
 
@@ -10,6 +28,38 @@ API_ENDPOINT=$1
 TOKEN=$2
 SOURCE_CLUSTER=$3
 DEST_CLUSTER=$4
+
+# Parse safety flags - DRY RUN IS DEFAULT!
+DRY_RUN=true
+AUTO_CONFIRM=false
+VERBOSE=false
+
+shift 4
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        --live)
+            DRY_RUN=false
+            shift
+            ;;
+        --auto-confirm)
+            AUTO_CONFIRM=true
+            shift
+            ;;
+        --verbose)
+            VERBOSE=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
 
 # Create logs directory if it doesn't exist
 LOG_DIR="logs"
@@ -32,16 +82,270 @@ log_summary() {
     echo "$message" >> "$SUMMARY_FILE"
 }
 
+# Function to find corresponding destination environment with multiple strategies
+find_dest_environment() {
+    local source_env_name=$1
+    
+    # Validate input
+    if [ -z "$source_env_name" ]; then
+        return 1
+    fi
+    
+    # Filter environments to only include destination cluster
+    local dest_environments=$(echo "$ENVIRONMENTS" | jq -c --arg cluster_id "$DEST_CLUSTER_ID" '[.[] | select(.cluster[0].id == $cluster_id)]')
+    
+    # Strategy 1: Exact match (only in destination cluster)
+    local dest_env=$(echo "$dest_environments" | jq -c --arg name "$source_env_name" '.[] | select(.name == $name)')
+    
+    if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
+        echo "$dest_env"
+        return 0
+    fi
+    
+    # Strategy 2: Extract namespace from various patterns and try multiple matching approaches
+    local namespace=""
+    local source_cluster_lower=$(echo "$SOURCE_CLUSTER" | tr '[:upper:]' '[:lower:]')
+    local dest_cluster_lower=$(echo "$DEST_CLUSTER" | tr '[:upper:]' '[:lower:]')
+    
+    # Pattern 1: clustername-namespace (remove cluster prefix)
+    if [[ "$source_env_name" == "$SOURCE_CLUSTER-"* ]]; then
+        namespace=$(echo "$source_env_name" | sed "s/^$SOURCE_CLUSTER-//")
+    # Pattern 2: namespace-clustername (remove cluster suffix)  
+    elif [[ "$source_env_name" == *"-$SOURCE_CLUSTER" ]]; then
+        namespace=$(echo "$source_env_name" | sed "s/-$SOURCE_CLUSTER$//")
+    # Pattern 3: Try case-insensitive cluster matching
+    elif [[ "$(echo "$source_env_name" | tr '[:upper:]' '[:lower:]')" == "$source_cluster_lower-"* ]]; then
+        namespace=$(echo "$(echo "$source_env_name" | tr '[:upper:]' '[:lower:]')" | sed "s/^$source_cluster_lower-//")
+    elif [[ "$(echo "$source_env_name" | tr '[:upper:]' '[:lower:]')" == *"-$source_cluster_lower" ]]; then
+        namespace=$(echo "$(echo "$source_env_name" | tr '[:upper:]' '[:lower:]')" | sed "s/-$source_cluster_lower$//")
+    # Pattern 4: Remove any numeric suffixes and try again
+    else
+        namespace=$(echo "$source_env_name" | sed 's/-[0-9]*$//')
+    fi
+    
+    if [ -z "$namespace" ]; then
+        namespace="$source_env_name"
+    fi
+    
+    # Strategy 3: Try to find destination environment using extracted namespace
+    # Try multiple destination patterns
+    
+    # Pattern A: exact namespace match
+    dest_env=$(echo "$dest_environments" | jq -c --arg name "$namespace" '.[] | select(.name == $name)')
+    if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
+        echo "$dest_env"
+        return 0
+    fi
+    
+    # Pattern B: destcluster-namespace
+    local dest_pattern="$DEST_CLUSTER-$namespace"
+    dest_env=$(echo "$dest_environments" | jq -c --arg name "$dest_pattern" '.[] | select(.name == $name)')
+    if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
+        echo "$dest_env"
+        return 0
+    fi
+    
+    # Pattern C: namespace-destcluster
+    dest_pattern="$namespace-$DEST_CLUSTER"
+    dest_env=$(echo "$dest_environments" | jq -c --arg name "$dest_pattern" '.[] | select(.name == $name)')
+    if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
+        echo "$dest_env"
+        return 0
+    fi
+    
+    # Pattern D: Case-insensitive versions
+    dest_pattern="$dest_cluster_lower-$namespace"
+    dest_env=$(echo "$dest_environments" | jq -c --arg name "$dest_pattern" '.[] | select(.name == $name)')
+    if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
+        echo "$dest_env"
+        return 0
+    fi
+    
+    dest_pattern="$namespace-$dest_cluster_lower"
+    dest_env=$(echo "$dest_environments" | jq -c --arg name "$dest_pattern" '.[] | select(.name == $name)')
+    if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
+        echo "$dest_env"
+        return 0
+    fi
+    
+    # Pattern E: Special migration pattern - replace source cluster with destination cluster
+    dest_pattern=$(echo "$source_env_name" | sed "s/-$SOURCE_CLUSTER$/-$DEST_CLUSTER/")
+    if [ "$dest_pattern" != "$source_env_name" ]; then
+        dest_env=$(echo "$dest_environments" | jq -c --arg name "$dest_pattern" '.[] | select(.name == $name)')
+        if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
+            echo "$dest_env"
+            return 0
+        fi
+    fi
+    
+    # Pattern F: Legacy simple replacement (backwards compatibility)
+    if [[ "$source_env_name" == "new-migration" ]]; then
+        # Special case for new-migration environment
+        dest_pattern="new-migration-${DEST_CLUSTER}"
+    elif [[ "$source_env_name" == *"$SOURCE_CLUSTER" ]]; then
+        # Environment has source cluster suffix
+        dest_pattern="${source_env_name%$SOURCE_CLUSTER}$DEST_CLUSTER"
+    else
+        # Environment doesn't have cluster suffix
+        dest_pattern="${source_env_name}-${DEST_CLUSTER}"
+    fi
+    
+    dest_env=$(echo "$dest_environments" | jq -c --arg name "$dest_pattern" '.[] | select(.name == $name)')
+    if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
+        echo "$dest_env"
+        return 0
+    fi
+    
+    # Strategy 4: Fuzzy matching - contains the namespace
+    dest_env=$(echo "$dest_environments" | jq -c --arg pattern "$namespace" '.[] | select(.name | contains($pattern))')
+    if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
+        echo "$dest_env"
+        return 0
+    fi
+    
+    return 1
+}
+
+# Function to check if environment is a system namespace that should be skipped
+is_system_namespace() {
+    local env_name=$1
+    
+    # List of system namespaces to skip
+    local system_namespaces=(
+        "nirmata"
+        "kyverno"
+        "ingress-haproxy"
+        "kube-node-lease"
+        "kube-system"
+        "kube-public"
+        "default"
+        "nirmata-system"
+        "kyverno-system"
+        "ingress-nginx"
+        "cert-manager"
+        "monitoring"
+        "logging"
+    )
+    
+    # Check if environment name matches any system namespace patterns
+    for sys_ns in "${system_namespaces[@]}"; do
+        # Exact match
+        if [ "$env_name" = "$sys_ns" ]; then
+            return 0
+        fi
+        
+        # Pattern match with cluster suffix (e.g., kube-system-conformance-132)
+        if [[ "$env_name" == "$sys_ns-"* ]]; then
+            return 0
+        fi
+        
+        # Pattern match with cluster prefix (e.g., conformance-132-kube-system)
+        if [[ "$env_name" == *"-$sys_ns" ]]; then
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+# Function to execute API call or simulate in dry run mode
+execute_api_call() {
+    local description="$1"
+    local method="$2"
+    local url="$3"
+    local data="$4"
+    local headers="$5"
+    
+    if [ "$DRY_RUN" = true ]; then
+        log_message "🔍 DRY RUN: Would $description"
+        log_message "   Method: $method"
+        log_message "   URL: $url"
+        if [ ! -z "$data" ] && [ "$data" != "null" ]; then
+            log_message "   Data: $(echo "$data" | jq -c . 2>/dev/null || echo "$data")"
+        fi
+        return 0
+    else
+        log_message "🚀 LIVE: $description"
+        if [ "$method" = "GET" ]; then
+            curl -s -H "$headers" "$url"
+        elif [ "$method" = "POST" ]; then
+            curl -s -X POST -H "$headers" -H "Content-Type: application/json" -d "$data" "$url"
+        elif [ "$method" = "PUT" ]; then
+            curl -s -X PUT -H "$headers" -H "Content-Type: application/json" -d "$data" "$url"
+        elif [ "$method" = "PATCH" ]; then
+            curl -s -X PATCH -H "$headers" -H "Content-Type: application/json" -d "$data" "$url"
+        fi
+    fi
+}
+
+# Function to ask for user confirmation
+ask_confirmation() {
+    local message="$1"
+    
+    if [ "$AUTO_CONFIRM" = true ]; then
+        return 0
+    fi
+    
+    if [ "$DRY_RUN" = true ]; then
+        return 0  # Skip confirmation in dry run mode
+    fi
+    
+    echo ""
+    echo "⚠️  $message"
+    echo "Do you want to continue? (y/N): "
+    read -r response
+    
+    case "$response" in
+        [yY]|[yY][eE][sS])
+            return 0
+            ;;
+        *)
+            echo "Operation cancelled by user."
+            exit 1
+            ;;
+    esac
+}
+
+# Function to display mode banner
+display_mode_banner() {
+    echo ""
+    echo "============================================================"
+    if [ "$DRY_RUN" = true ]; then
+        echo "🔍 DRY RUN MODE - NO CHANGES WILL BE MADE"
+        echo "   This is a preview of what would happen"
+        echo "   Use --live to actually execute changes"
+    else
+        echo "🚀 LIVE MODE - CHANGES WILL BE MADE"
+        echo "   This will modify your environments!"
+        echo "   Make sure you've reviewed the dry run output first"
+    fi
+    echo "============================================================"
+    echo ""
+}
+
 # Initialize summary counters
 TOTAL_ENVIRONMENTS=0
 SUCCESSFUL_COPIES=0
 SKIPPED_ENVIRONMENTS=0
 FAILED_COPIES=0
 
+# Display mode banner
+display_mode_banner
+
+echo "📁 LOGGING INFORMATION:"
+echo "   📊 Detailed Log: $LOG_FILE"
+echo "   📋 Summary Log:  $SUMMARY_FILE"
+echo ""
+
 log_message "Starting environment settings restoration from $SOURCE_CLUSTER to $DEST_CLUSTER"
 log_summary "Environment Settings Restoration Summary"
 log_summary "Source Cluster: $SOURCE_CLUSTER"
 log_summary "Destination Cluster: $DEST_CLUSTER"
+if [ "$DRY_RUN" = true ]; then
+    log_summary "Mode: DRY RUN (preview only)"
+else
+    log_summary "Mode: LIVE (making actual changes)"
+fi
 log_summary "----------------------------------------"
 
 # Validate token
@@ -248,51 +552,145 @@ copy_environment_settings() {
     # ... existing code ...
 }
 
+# First, let's preview the environment mappings
+log_message "========== ENVIRONMENT MAPPING PREVIEW =========="
+
+# Create temporary files for counting
+TEMP_PREVIEW="/tmp/env_preview_$$"
+echo "" > "$TEMP_PREVIEW"
+
+echo "$SOURCE_ENVIRONMENTS" | jq -c '.' | while read -r env; do
+    ENV_NAME=$(echo "$env" | jq -r '.name')
+    
+    # Check if this is a system namespace that should be skipped
+    if is_system_namespace "$ENV_NAME"; then
+        log_message "PREVIEW: SKIP (system namespace) - $ENV_NAME"
+        echo "SKIP" >> "$TEMP_PREVIEW"
+        continue
+    fi
+    
+    # Use intelligent environment mapping
+    DEST_ENV=$(find_dest_environment "$ENV_NAME")
+    
+    if [ -z "$DEST_ENV" ]; then
+        log_message "PREVIEW: FAIL (no match) - $ENV_NAME"
+        echo "FAIL" >> "$TEMP_PREVIEW"
+    else
+        DEST_ENV_NAME=$(echo "$DEST_ENV" | jq -r '.name')
+        log_message "PREVIEW: MATCH - $ENV_NAME -> $DEST_ENV_NAME"
+        echo "MATCH" >> "$TEMP_PREVIEW"
+    fi
+done
+
+# Count results
+PREVIEW_TOTAL=$(cat "$TEMP_PREVIEW" | wc -l)
+PREVIEW_MATCHED=$(grep -c "MATCH" "$TEMP_PREVIEW" 2>/dev/null || echo 0)
+PREVIEW_SKIPPED=$(grep -c "SKIP" "$TEMP_PREVIEW" 2>/dev/null || echo 0)
+PREVIEW_FAILED=$(grep -c "FAIL" "$TEMP_PREVIEW" 2>/dev/null || echo 0)
+
+# Clean up
+rm -f "$TEMP_PREVIEW"
+
+log_message "========== PREVIEW SUMMARY =========="
+log_message "Total environments: $PREVIEW_TOTAL"
+log_message "Will be processed: $PREVIEW_MATCHED"
+log_message "Will be skipped: $PREVIEW_SKIPPED"
+log_message "Failed to match: $PREVIEW_FAILED"
+log_message "=============================================="
+
+if [ "$PREVIEW_FAILED" -gt 0 ]; then
+    log_message "WARNING: Some environments could not be matched to destinations."
+    log_message "These environments will be skipped during processing."
+fi
+
+# Ask for confirmation if not in dry run mode
+if [ "$DRY_RUN" = false ]; then
+    ask_confirmation "This will make actual changes to $PREVIEW_MATCHED environments. Are you sure you want to continue?"
+fi
+
+log_message "Starting environment processing..."
+
 # Process each environment
 echo "$SOURCE_ENVIRONMENTS" | jq -c '.' | while read -r env; do
     ENV_NAME=$(echo "$env" | jq -r '.name')
     SOURCE_ENV_ID=$(echo "$env" | jq -r '.id')
     TOTAL_ENVIRONMENTS=$((TOTAL_ENVIRONMENTS + 1))
     
-    # Determine destination environment name based on naming pattern
-    if [[ "$ENV_NAME" == "new-migration" ]]; then
-        # Special case for new-migration environment
-        DEST_ENV_NAME="new-migration-${DEST_CLUSTER}"
-    elif [[ "$ENV_NAME" == *"$SOURCE_CLUSTER" ]]; then
-        # Environment has source cluster suffix
-        DEST_ENV_NAME="${ENV_NAME%$SOURCE_CLUSTER}$DEST_CLUSTER"
-    else
-        # Environment doesn't have cluster suffix
-        DEST_ENV_NAME="${ENV_NAME}-${DEST_CLUSTER}"
-    fi
-    
-    log_message "Processing environment: $ENV_NAME -> $DEST_ENV_NAME"
-    
-    # Check if destination environment exists
-    DEST_ENV=$(echo "$ENVIRONMENTS" | jq -r --arg name "$DEST_ENV_NAME" '.[] | select(.name == $name)')
-    
-    if [ -z "$DEST_ENV" ]; then
-        log_message "Destination environment $DEST_ENV_NAME not found."
-        FAILED_COPIES=$((FAILED_COPIES + 1))
-        log_summary "FAILED: $ENV_NAME -> $DEST_ENV_NAME (Environment not found)"
+    # Check if this is a system namespace that should be skipped
+    if is_system_namespace "$ENV_NAME"; then
+        log_message "Skipping system namespace: $ENV_NAME"
+        SKIPPED_ENVIRONMENTS=$((SKIPPED_ENVIRONMENTS + 1))
         continue
     fi
     
+    log_message "Processing environment: $ENV_NAME"
+    
+    # Use intelligent environment mapping
+    DEST_ENV=$(find_dest_environment "$ENV_NAME")
+    
+    if [ -z "$DEST_ENV" ]; then
+        log_message "ERROR: No corresponding destination environment found for $ENV_NAME"
+        log_message "Tried patterns for source '$ENV_NAME':"
+        log_message "  - Exact match: $ENV_NAME"
+        if [[ "$ENV_NAME" == "$SOURCE_CLUSTER-"* ]]; then
+            namespace=$(echo "$ENV_NAME" | sed "s/^$SOURCE_CLUSTER-//")
+            log_message "  - Detected cluster prefix pattern, extracted namespace: $namespace"
+            log_message "  - Tried: $namespace"
+            log_message "  - Tried: $DEST_CLUSTER-$namespace"  
+            log_message "  - Tried: $namespace-$DEST_CLUSTER"
+        elif [[ "$ENV_NAME" == *"-$SOURCE_CLUSTER" ]]; then
+            namespace=$(echo "$ENV_NAME" | sed "s/-$SOURCE_CLUSTER$//")
+            log_message "  - Detected cluster suffix pattern, extracted namespace: $namespace"
+            log_message "  - Tried: $namespace"
+            log_message "  - Tried: $DEST_CLUSTER-$namespace"
+            log_message "  - Tried: $namespace-$DEST_CLUSTER"
+        fi
+        FAILED_COPIES=$((FAILED_COPIES + 1))
+        log_summary "FAILED: $ENV_NAME -> NO MATCH FOUND"
+        continue
+    fi
+    
+    DEST_ENV_NAME=$(echo "$DEST_ENV" | jq -r '.name')
     DEST_ENV_ID=$(echo "$DEST_ENV" | jq -r '.id')
     
+    # Determine which pattern was used
+    pattern_used="unknown"
+    if [ "$DEST_ENV_NAME" = "$ENV_NAME" ]; then
+        pattern_used="exact match"
+    elif [[ "$ENV_NAME" == "$SOURCE_CLUSTER-"* ]]; then
+        namespace=$(echo "$ENV_NAME" | sed "s/^$SOURCE_CLUSTER-//")
+        if [ "$DEST_ENV_NAME" = "$namespace" ]; then
+            pattern_used="namespace-only (prefix pattern)"
+        elif [ "$DEST_ENV_NAME" = "$DEST_CLUSTER-$namespace" ]; then
+            pattern_used="cluster-prefix ($DEST_CLUSTER-$namespace)"
+        elif [ "$DEST_ENV_NAME" = "$namespace-$DEST_CLUSTER" ]; then
+            pattern_used="cluster-suffix ($namespace-$DEST_CLUSTER)"
+        fi
+    elif [[ "$ENV_NAME" == *"-$SOURCE_CLUSTER" ]]; then
+        namespace=$(echo "$ENV_NAME" | sed "s/-$SOURCE_CLUSTER$//")
+        if [ "$DEST_ENV_NAME" = "$namespace" ]; then
+            pattern_used="namespace-only (suffix pattern)"
+        elif [ "$DEST_ENV_NAME" = "$DEST_CLUSTER-$namespace" ]; then
+            pattern_used="cluster-prefix ($DEST_CLUSTER-$namespace)"
+        elif [ "$DEST_ENV_NAME" = "$namespace-$DEST_CLUSTER" ]; then
+            pattern_used="cluster-suffix ($namespace-$DEST_CLUSTER)"
+        fi
+    fi
+    
+    log_message "✅ Successfully mapped using $pattern_used: $ENV_NAME -> $DEST_ENV_NAME"
     log_message "Source ID: $SOURCE_ENV_ID"
     log_message "Destination ID: $DEST_ENV_ID"
     
     # Copy resource type
     RESOURCE_TYPE=$(echo "$env" | jq -r '.resourceType')
     if [ ! -z "$RESOURCE_TYPE" ] && [ "$RESOURCE_TYPE" != "null" ]; then
-        log_message "Copying resource type: $RESOURCE_TYPE"
-        curl -s -X PUT \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -H "Authorization: NIRMATA-API $TOKEN" \
-            -d "{\"resourceType\":\"$RESOURCE_TYPE\"}" \
-            "${API_ENDPOINT}/environments/api/environments/$DEST_ENV_ID"
+        RESOURCE_TYPE_DATA="{\"resourceType\":\"$RESOURCE_TYPE\"}"
+        execute_api_call \
+            "set resource type to $RESOURCE_TYPE" \
+            "PUT" \
+            "${API_ENDPOINT}/environments/api/environments/$DEST_ENV_ID" \
+            "$RESOURCE_TYPE_DATA" \
+            "Authorization: NIRMATA-API $TOKEN"
     fi
     
     # Copy ACLs and permissions
@@ -335,19 +733,21 @@ echo "$SOURCE_ENVIRONMENTS" | jq -c '.' | while read -r env; do
                         PERMISSION=$(echo "$CONTROL_DETAILS" | jq -r '.permission')
                         
                         if [ ! -z "$TEAM_ID" ] && [ ! -z "$TEAM_NAME" ] && [ ! -z "$PERMISSION" ]; then
-                            log_message "Creating ACL for team $TEAM_NAME ($TEAM_ID) with permission $PERMISSION"
-                            ACL_RESPONSE=$(curl -s -X POST \
-                                -H "Content-Type: application/json" \
-                                -H "Accept: application/json" \
-                                -H "Authorization: NIRMATA-API $TOKEN" \
-                                -d "{\"entityId\":\"$TEAM_ID\",\"entityType\":\"team\",\"permission\":\"$PERMISSION\",\"entityName\":\"$TEAM_NAME\"}" \
-                                "${API_ENDPOINT}/environments/api/accessControlLists/$DEST_ACL_ID/accessControls")
+                            ACL_DATA="{\"entityId\":\"$TEAM_ID\",\"entityType\":\"team\",\"permission\":\"$PERMISSION\",\"entityName\":\"$TEAM_NAME\"}"
+                            ACL_RESPONSE=$(execute_api_call \
+                                "create ACL for team $TEAM_NAME ($TEAM_ID) with permission $PERMISSION" \
+                                "POST" \
+                                "${API_ENDPOINT}/environments/api/accessControlLists/$DEST_ACL_ID/accessControls" \
+                                "$ACL_DATA" \
+                                "Authorization: NIRMATA-API $TOKEN")
                             
-                            # Check if ACL was created successfully
-                            if [ ! -z "$ACL_RESPONSE" ]; then
-                                log_message "Successfully created ACL for team $TEAM_NAME"
-                            else
-                                log_message "Failed to create ACL for team $TEAM_NAME"
+                            # Check if ACL was created successfully (only in live mode)
+                            if [ "$DRY_RUN" = false ]; then
+                                if [ ! -z "$ACL_RESPONSE" ]; then
+                                    log_message "Successfully created ACL for team $TEAM_NAME"
+                                else
+                                    log_message "Failed to create ACL for team $TEAM_NAME"
+                                fi
                             fi
                         else
                             log_message "Missing required ACL information for control ID: $control_id"
@@ -464,25 +864,28 @@ echo "$SOURCE_ENVIRONMENTS" | jq -c '.' | while read -r env; do
                 
                 log_message "Creating quota with payload: $QUOTA_PAYLOAD"
                 
-                QUOTA_RESPONSE=$(curl -s -X POST \
-                    -H "Content-Type: application/json" \
-                    -H "Authorization: NIRMATA-API ${TOKEN}" \
+                QUOTA_RESPONSE=$(execute_api_call \
+                    "create resource quota $QUOTA_NAME" \
+                    "POST" \
                     "${API_ENDPOINT}/environments/api/environments/${DEST_ENV_ID}/resourceQuota" \
-                    -d "${QUOTA_PAYLOAD}")
+                    "${QUOTA_PAYLOAD}" \
+                    "Authorization: NIRMATA-API ${TOKEN}")
                 
-                if [ ! -z "$QUOTA_RESPONSE" ]; then
-                    log_message "Successfully created quota $QUOTA_NAME"
-                    # Verify the quota was created correctly
-                    VERIFY_QUOTA=$(curl -s -H "Authorization: NIRMATA-API ${TOKEN}" \
-                        "${API_ENDPOINT}/environments/api/environments/${DEST_ENV_ID}/resourceQuota" | \
-                        jq -r --arg name "$QUOTA_NAME" '.[] | select(.name == $name)')
-                    if [ ! -z "$VERIFY_QUOTA" ]; then
-                        log_message "Verified quota $QUOTA_NAME was created successfully"
+                if [ "$DRY_RUN" = false ]; then
+                    if [ ! -z "$QUOTA_RESPONSE" ]; then
+                        log_message "Successfully created quota $QUOTA_NAME"
+                        # Verify the quota was created correctly
+                        VERIFY_QUOTA=$(curl -s -H "Authorization: NIRMATA-API ${TOKEN}" \
+                            "${API_ENDPOINT}/environments/api/environments/${DEST_ENV_ID}/resourceQuota" | \
+                            jq -r --arg name "$QUOTA_NAME" '.[] | select(.name == $name)')
+                        if [ ! -z "$VERIFY_QUOTA" ]; then
+                            log_message "Verified quota $QUOTA_NAME was created successfully"
+                        else
+                            log_message "Warning: Could not verify quota $QUOTA_NAME creation"
+                        fi
                     else
-                        log_message "Warning: Could not verify quota $QUOTA_NAME creation"
+                        log_message "Failed to create quota $QUOTA_NAME"
                     fi
-                else
-                    log_message "Failed to create quota $QUOTA_NAME"
                 fi
             fi
         done
@@ -501,18 +904,20 @@ echo "$SOURCE_ENVIRONMENTS" | jq -c '.' | while read -r env; do
             LIMIT_SPEC=$(echo "$limit" | jq -r '.spec')
             
             if [ ! -z "$LIMIT_NAME" ] && [ ! -z "$LIMIT_SPEC" ] && [ "$LIMIT_SPEC" != "null" ]; then
-                log_message "Creating limit range: $LIMIT_NAME"
                 LIMIT_PAYLOAD="{\"name\":\"${LIMIT_NAME}\",\"spec\":${LIMIT_SPEC}}"
-                LIMIT_RESPONSE=$(curl -s -X POST \
-                    -H "Content-Type: application/json" \
-                    -H "Authorization: NIRMATA-API ${TOKEN}" \
+                LIMIT_RESPONSE=$(execute_api_call \
+                    "create limit range $LIMIT_NAME" \
+                    "POST" \
                     "${API_ENDPOINT}/environments/api/environments/${DEST_ENV_ID}/limitRange" \
-                    -d "${LIMIT_PAYLOAD}")
+                    "${LIMIT_PAYLOAD}" \
+                    "Authorization: NIRMATA-API ${TOKEN}")
                 
-                if [ ! -z "$LIMIT_RESPONSE" ]; then
-                    log_message "Successfully created limit range $LIMIT_NAME"
-                else
-                    log_message "Failed to create limit range $LIMIT_NAME"
+                if [ "$DRY_RUN" = false ]; then
+                    if [ ! -z "$LIMIT_RESPONSE" ]; then
+                        log_message "Successfully created limit range $LIMIT_NAME"
+                    else
+                        log_message "Failed to create limit range $LIMIT_NAME"
+                    fi
                 fi
             fi
         done
@@ -524,14 +929,17 @@ echo "$SOURCE_ENVIRONMENTS" | jq -c '.' | while read -r env; do
     log_message "Copying owner details..."
     OWNER=$(echo "$env" | jq -r '.createdBy')
     if [ ! -z "$OWNER" ] && [ "$OWNER" != "null" ]; then
-        log_message "Setting owner to: $OWNER"
-        curl -s -X PUT \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -H "Authorization: NIRMATA-API $TOKEN" \
-            -d "{\"createdBy\":\"$OWNER\",\"modifiedBy\":\"$OWNER\"}" \
-            "${API_ENDPOINT}/environments/api/environments/$DEST_ENV_ID"
-        log_message "Updated owner details"
+        OWNER_DATA="{\"createdBy\":\"$OWNER\",\"modifiedBy\":\"$OWNER\"}"
+        execute_api_call \
+            "set owner to $OWNER" \
+            "PUT" \
+            "${API_ENDPOINT}/environments/api/environments/$DEST_ENV_ID" \
+            "$OWNER_DATA" \
+            "Authorization: NIRMATA-API $TOKEN"
+        
+        if [ "$DRY_RUN" = false ]; then
+            log_message "Updated owner details"
+        fi
     fi
 
     # Copy labels
@@ -539,13 +947,17 @@ echo "$SOURCE_ENVIRONMENTS" | jq -c '.' | while read -r env; do
     LABELS=$(echo "$env" | jq -r '.labels')
     if [ ! -z "$LABELS" ] && [ "$LABELS" != "null" ] && [ "$LABELS" != "{}" ]; then
         log_message "Source labels: $LABELS"
-        curl -s -X PUT \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -H "Authorization: NIRMATA-API $TOKEN" \
-            -d "{\"labels\":$LABELS}" \
-            "${API_ENDPOINT}/environments/api/environments/$DEST_ENV_ID"
-        log_message "Updated labels"
+        LABELS_DATA="{\"labels\":$LABELS}"
+        execute_api_call \
+            "update labels" \
+            "PUT" \
+            "${API_ENDPOINT}/environments/api/environments/$DEST_ENV_ID" \
+            "$LABELS_DATA" \
+            "Authorization: NIRMATA-API $TOKEN"
+        
+        if [ "$DRY_RUN" = false ]; then
+            log_message "Updated labels"
+        fi
     fi
     
     # Copy team rolebindings
@@ -555,14 +967,47 @@ echo "$SOURCE_ENVIRONMENTS" | jq -c '.' | while read -r env; do
     SUCCESSFUL_COPIES=$((SUCCESSFUL_COPIES + 1))
     log_summary "SUCCESS: $ENV_NAME -> $DEST_ENV_NAME"
     
-    log_message "Settings copy completed for $ENV_NAME"
+    log_message "Settings copy completed for $ENV_NAME -> $DEST_ENV_NAME"
 done
 
 # Log final summary
-log_message "All settings copied successfully"
+if [ "$DRY_RUN" = true ]; then
+    log_message "🔍 DRY RUN COMPLETED - No actual changes were made"
+    log_message "   To execute these changes, run the script with --live flag"
+else
+    log_message "🚀 LIVE RUN COMPLETED - All settings copied successfully"
+fi
+
 log_summary "----------------------------------------"
+if [ "$DRY_RUN" = true ]; then
+    log_summary "DRY RUN SUMMARY (preview only):"
+else
+    log_summary "LIVE RUN SUMMARY (actual changes made):"
+fi
 log_summary "Total Environments Processed: $TOTAL_ENVIRONMENTS"
 log_summary "Successfully Copied: $SUCCESSFUL_COPIES"
 log_summary "Skipped: $SKIPPED_ENVIRONMENTS"
 log_summary "Failed: $FAILED_COPIES"
-log_summary "----------------------------------------" 
+log_summary "----------------------------------------"
+
+echo ""
+echo "📁 LOG FILES CREATED:"
+echo "   📊 Detailed Log: $LOG_FILE"
+echo "   📋 Summary Log:  $SUMMARY_FILE"
+echo ""
+
+if [ "$DRY_RUN" = true ]; then
+    echo "🔍 This was a DRY RUN - no actual changes were made to your environments."
+    echo "   To execute these changes, run the script again with the --live flag:"
+    echo "   $0 $API_ENDPOINT [TOKEN] $SOURCE_CLUSTER $DEST_CLUSTER --live"
+    echo ""
+    echo "💡 TIP: Review the detailed log file for complete operation details:"
+    echo "   cat $LOG_FILE"
+else
+    echo "🚀 LIVE RUN COMPLETED - All changes have been applied to your environments."
+    echo ""
+    echo "💡 TIP: Review the log files for complete operation details:"
+    echo "   cat $LOG_FILE      # Detailed operations log"
+    echo "   cat $SUMMARY_FILE  # Summary of results"
+fi
+echo "" 
