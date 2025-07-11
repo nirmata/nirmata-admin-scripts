@@ -1,185 +1,228 @@
-# Environment to Catalog Migration Scripts
+# 🚀 Enhanced Environment to Catalog Migration
 
-This directory contains scripts for migrating environment settings to catalog environments in Nirmata.
+## Overview
+Enterprise-grade migration script with **production-ready naming** that creates clean, cluster-agnostic catalog applications for seamless cluster-to-cluster migrations.
 
-## Scripts Overview
+## 🎯 Production-Ready Features
 
-### migrate_env_apps_to_catalog.sh
+### ✅ **Clean Naming Convention**
+- **NO old cluster references** in catalog app names
+- Example: `conformance-132-shuting` → `shuting` (NOT `app-shuting-conformance-132`)
+- Forward-looking, professional naming for production use
+- Intelligent conflict resolution with versioning
 
-This script facilitates the migration of applications from environments to catalogs. It's designed to:
-- Migrate Git-based applications to catalogs
-- Preserve Git repository configurations including credentials
-- Handle application naming with destination cluster suffixes
-- Create catalogs automatically if they don't exist
+### ✅ **Safety-First Design**
+- **Dry run by default** - Preview changes before making them
+- Confirmation prompts for live execution
+- Comprehensive logging with detailed and summary logs
+- Mode indicators throughout (🔍 DRY RUN vs 🚀 LIVE)
 
-#### Usage
+### ✅ **Enterprise Features**
+- **🎯 Interactive Mode** with y/n/list/skip confirmations for each environment
+- **👥 Automatic Team Permissions** - copies team permissions from source environments to catalog level
+- **📋 Mapping Preview** - shows applications and permissions before migration
+- Verbose mode for detailed API debugging
+- Auto-confirm mode for scripted execution
+- Smart Git credential mapping with fallback strategies
+- Enhanced error handling and authentication validation
+
+## 🔧 Quick Start
+
+### Step 1: Preview Migration (Safe)
 ```bash
-./migrate_env_apps_to_catalog.sh <api_endpoint> <token> <source_cluster_name> <destination_cluster_name>
+# Default dry run mode - no changes made
+./migrate_env_apps_to_catalog.sh \
+  https://your-nirmata-endpoint.com \
+  "YOUR_API_TOKEN" \
+  "source-cluster" \
+  "destination-cluster"
 ```
 
-Example:
+### Step 2: Execute Migration (Interactive Mode)
 ```bash
-./migrate_env_apps_to_catalog.sh https://pe420.nirmata.co "YOUR_API_TOKEN" "123-app-migration" "129-app-migration"
+# Live execution with interactive y/n/list/skip confirmations
+./migrate_env_apps_to_catalog.sh \
+  https://your-nirmata-endpoint.com \
+  "YOUR_API_TOKEN" \
+  "source-cluster" \
+  "destination-cluster" \
+  --live
+
+# Interactive session shows:
+# - Applications to migrate
+# - Team permissions to copy
+# - Catalog mapping options
+# - y/n/list/skip choices
 ```
 
-#### Features
-- Automatic catalog creation based on environment names
-- Git-based application migration with credential preservation
-- Intelligent application naming with destination cluster suffixes
-- Automatic handling of name conflicts with timestamps
-- Git credential name preservation (without copying sensitive data)
-- Detailed logging of migration process
-
-## Requirements
-- `curl` for API calls
-- `jq` for JSON processing
-- Bash shell
-- Nirmata API access token with appropriate permissions
-- Access to source environments and catalogs
-
-## Git Credential Handling
-The script now includes improved Git credential handling:
-- Preserves Git credential references with proper structure
-- Sets credential in both `additionalProperties.credential` and `gitCredential` fields
-- Uses the correct service name ("Environments") and modelIndex ("GitCredential")
-- Maintains credential ID references for proper UI integration
-- Does not copy sensitive credential data (username/password)
-- Ensures proper credential display in the UI
-- Supports both credential field formats for compatibility
-
-Example credential structure:
-```json
-{
-  "additionalProperties": {
-    "credential": {
-      "service": "Environments",
-      "modelIndex": "GitCredential",
-      "id": "credential-id"
-    }
-  },
-  "gitCredential": {
-    "service": "Environments",
-    "modelIndex": "GitCredential",
-    "id": "credential-id"
-  }
-}
-```
-
-## Error Handling
-- Comprehensive error checking for:
-  - API authentication
-  - Environment existence
-  - Git upstream validation
-  - Application creation
-  - Credential reference validation
-- Detailed logging for troubleshooting
-
-## Best Practices
-1. Verify environment names and access before migration
-2. Ensure Git credentials are properly configured in the destination
-3. Test migration in a non-production setup first
-4. Monitor migration progress and check logs
-5. Validate all settings post-migration
-
-## Migration Process
-1. **Pre-migration Checks**
-   - Validate source environment existence
-   - Check cluster name validity
-   - Verify API access
-
-2. **Application Migration**
-   - Create catalog if needed
-   - Process Git-based applications
-   - Copy Git repository details
-   - Preserve credential references
-   - Handle naming conflicts
-
-3. **Post-migration Validation**
-   - Verify application creation
-   - Check Git upstream configuration
-   - Validate credential references
-   - Ensure proper application naming
-
-## Troubleshooting
-- Check API response codes for errors
-- Verify token permissions
-- Ensure environment names are correct
-- Review logs for detailed error messages
-- Verify Git credential configuration
-
-## copy_to_catalog.sh
-
-This script facilitates the migration of environment settings to catalog environments. It's designed to:
-- Copy complete environment configurations
-- Handle application settings and deployments
-- Preserve Git repository configurations
-- Maintain environment-specific settings
-
-#### Usage
+### Step 3: Automated Execution
 ```bash
-./copy_to_catalog.sh <api_endpoint> <token> <source_env> <destination_env>
+# Automated mode for scripts (use with caution)
+./migrate_env_apps_to_catalog.sh \
+  https://your-nirmata-endpoint.com \
+  "YOUR_API_TOKEN" \
+  "source-cluster" \
+  "destination-cluster" \
+  --live --auto-confirm
 ```
 
-Example:
+## 🎯 Production Naming Examples
+
+| Environment | Application | OLD Naming (BAD) | NEW Naming (GOOD) |
+|-------------|-------------|------------------|-------------------|
+| `conformance-132-shuting` | `shuting` | `app-shuting-conformance-132` | `shuting` |
+| `satya-conformance-132` | `monitoring` | `app-monitoring-conformance-132` | `monitoring` |
+| `prod-user-service` | `user-service` | `app-user-service-conformance-132` | `user-service` |
+
+**See [PRODUCTION_NAMING_EXAMPLES.md](PRODUCTION_NAMING_EXAMPLES.md) for complete naming strategy documentation.**
+
+## 📋 Complete Options
+
 ```bash
-./copy_to_catalog.sh https://pe420.nirmata.co "YOUR_API_TOKEN" "nginx-123-app-migration" "nginx-catalog"
+Usage: migrate_env_apps_to_catalog.sh <endpoint> <token> <source> <dest> [OPTIONS]
+
+OPTIONS:
+  --dry-run          Preview migration (DEFAULT)
+  --live             Execute actual migration
+  --auto-confirm     Skip confirmation prompts (no interactive mode)
+  --verbose          Detailed API logging
+  --help             Show complete help
 ```
 
-#### Features
-- Complete environment configuration copying
-- Application deployment settings migration
-- Git repository configuration preservation
-- Resource settings transfer:
-  - Resource quotas
-  - Limit ranges
-  - Access controls
-  - Update policies
-  - Labels
-- Automatic validation of source and destination environments
+## 🎯 Interactive Mode Features
 
-## Requirements
-- `curl` for API calls
-- `jq` for JSON processing
-- Bash shell
-- Nirmata API access token with appropriate permissions
-- Access to both source environment and catalog
+### **Environment-by-Environment Confirmation**
+For each environment with Git-based applications:
+- Shows **applications to migrate**
+- Shows **team permissions to copy**
+- Provides **catalog mapping options**
+- Interactive **y/n/list/skip** choices
 
-## Error Handling
-- Comprehensive error checking for:
-  - API authentication
-  - Environment existence
-  - Permission validation
-  - Resource availability
-- Detailed logging for troubleshooting
+### **Available Options**
+- **`y` (yes)**: Confirm migration with suggested catalog name
+- **`n` (no)**: Reject and specify custom catalog name  
+- **`list`**: Show all available catalogs
+- **`skip`**: Skip this environment completely
 
-## Best Practices
-1. Verify environment names and access before migration
-2. Ensure catalog environment is properly configured
-3. Back up source environment settings
-4. Test migration in a non-production setup first
-5. Monitor migration progress and check logs
-6. Validate all settings post-migration
+### **Example Interactive Session**
+```
+🔍 ENVIRONMENT → CATALOG MAPPING CONFIRMATION
+==============================================
+Source Environment: conformance-132-shuting
+Suggested Catalog: conformance
 
-## Migration Process
-1. **Pre-migration Checks**
-   - Validate source environment existence
-   - Verify catalog environment accessibility
-   - Check required permissions
+📱 Git-based applications to migrate (1):
+  - shuting
 
-2. **Configuration Copy**
-   - Copy basic environment settings
-   - Transfer resource configurations
-   - Migrate application settings
-   - Copy Git repository details
+👥 Team permissions to copy to catalog:
+  - new-migration-team → view
+  - vikash-team → view
 
-3. **Post-migration Validation**
-   - Verify all settings were copied
-   - Check application configurations
-   - Validate resource settings
-   - Ensure proper access controls
+Do you want to migrate applications from 'conformance-132-shuting' to catalog 'conformance'? (y/n/list/skip): y
+✅ Confirmed: conformance-132-shuting → conformance
+```
 
-## Troubleshooting
-- Check API response codes for errors
-- Verify token permissions
-- Ensure environment names are correct
-- Review logs for detailed error messages 
+## 👥 Team Permissions Management
+
+### **Automatic Team Permission Copy**
+- **Detects team permissions** in source environments
+- **Copies to catalog level** (not individual applications)
+- **Maintains permission levels** (view, edit, admin)
+- **Applies to entire catalog** - teams get access to ALL applications
+
+### **Benefits**
+- **Security Preserved**: Teams maintain their access levels
+- **Simplified Management**: Catalog-level permissions vs per-app
+- **Automatic Detection**: No manual configuration required
+- **Safe Migration**: Existing access controls preserved
+
+### **Permission Flow**
+```
+Source Environment (conformance-132-shuting)
+├── Team: dev-team (view)
+├── Team: ops-team (edit)
+└── Team: admin-team (admin)
+
+Target Catalog (conformance)
+├── Team: dev-team (view) ✅ COPIED
+├── Team: ops-team (edit) ✅ COPIED
+└── Team: admin-team (admin) ✅ COPIED
+```
+
+## 🛡️ Safety Features
+
+### 🔍 **Dry Run Mode (Default)**
+- Preview all changes before execution
+- No API modifications made
+- Comprehensive logging for review
+- Perfect for validation and planning
+
+### 🚀 **Live Mode**
+- Confirmation prompts before execution
+- Real-time progress updates
+- Detailed success/failure reporting
+- Rollback information preserved
+
+### 🤖 **Auto-Confirm Mode**
+- Automated execution for CI/CD pipelines
+- Skip interactive prompts
+- Comprehensive logging maintained
+- Use with extreme caution in production
+
+## 📊 Logging System
+
+All operations are logged to `./logs/` directory:
+
+- **Detailed Log**: `migration_detailed_SOURCE_to_DEST_TIMESTAMP.log`
+- **Summary Log**: `migration_summary_SOURCE_to_DEST_TIMESTAMP.log`
+- **Team Permissions**: Shows team permission detection and catalog application
+- **Mode Indicators**: 🔍 DRY RUN vs 🚀 LIVE clearly marked
+
+## 🔧 Advanced Features
+
+### **Intelligent Git Credential Mapping**
+- Automatic credential matching by name
+- Fallback to first available credential
+- Comprehensive validation and error handling
+
+### **Conflict Resolution**
+- Automatic detection of existing applications
+- Version-based naming for conflicts (e.g., `app-name-v2`)
+- Timestamp fallbacks for edge cases
+
+### **Enhanced Error Handling**
+- Authentication validation
+- Cluster existence verification
+- Git repository accessibility checks
+- Comprehensive error reporting
+
+## 🎯 Migration Workflow
+
+1. **Validation**: Authenticate and validate clusters
+2. **Discovery**: Find environments and Git-based applications
+3. **Team Detection**: Identify team permissions in source environments
+4. **Interactive Confirmation**: y/n/list/skip choices for each environment
+5. **Mapping**: Intelligent credential and naming mapping
+6. **Preview**: Show what will be migrated (dry run)
+7. **Execution**: Create catalog applications (live mode)
+8. **Permissions**: Apply team permissions to catalog level
+9. **Reporting**: Comprehensive success/failure summary
+
+## 🔒 Production Considerations
+
+### **Pre-Migration Checklist**
+- [ ] Backup source environment configurations
+- [ ] Verify destination cluster catalog access
+- [ ] Test with dry run mode first
+- [ ] Validate Git credential availability
+- [ ] Review naming convention requirements
+- [ ] Verify team permissions in source environments
+- [ ] Confirm catalog-level permission requirements
+
+### **Post-Migration Steps**
+- [ ] Verify catalog applications created successfully
+- [ ] Verify team permissions applied to catalog level
+- [ ] Test application deployment in destination cluster
+- [ ] Test team access to catalog applications
+- [ ] Update CI/CD pipelines with new catalog references
+- [ ] Archive or cleanup source environment applications 
