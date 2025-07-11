@@ -1,114 +1,280 @@
-# Catalog Reference Update Script
+# Catalog Reference Update Scripts
 
-This script automates the process of updating catalog references for applications in Nirmata environments. It handles the migration of catalog references from one cluster to another, with robust error handling and retry mechanisms.
+This directory contains advanced scripts for updating catalog references for applications in Nirmata environments after Velero-based migrations or cross-cluster operations. The scripts provide robust error handling, interactive features, and comprehensive pattern matching.
 
-## Features
+## 🚀 Scripts Available
 
-- **Automated Catalog Reference Updates**: Automatically finds and updates catalog references for applications
-- **Robust Error Handling**: 
-  - Retries failed operations with exponential backoff
-  - Handles various HTTP error codes (401, 403, 404, 429, 500, etc.)
-  - Provides detailed error messages and logging
-- **Transaction Safety**: Ensures updates are performed safely with proper error handling
-- **Comprehensive Logging**: Detailed logs with timestamps for all operations
-- **Pattern Matching**: Supports multiple patterns for finding catalog applications:
-  - `app-{name}-{cluster}`
-  - `app-{name}`
-  - `{name}`
-  - `{name}-{timestamp}`
+### 1. `update_catalog_references_fixed_api.sh` (Recommended)
+- **Main script** with enhanced interactive features
+- **Fixed API method** for persistent catalog references
+- **Comprehensive pattern matching** with fallback options
+- **Dynamic catalog listing** from live API
+- **Progress indicators** and real-time feedback
 
-## Prerequisites
+### 2. `update_catalog_references_cross_env_mapping.sh`
+- **Cross-environment mapping** for Velero restore scenarios
+- **Namespace-based mapping** logic
+- **Source-to-destination environment mapping**
 
-- Bash shell
+## ✨ Key Features
+
+### 🔧 **Enhanced API Integration**
+- ✅ **Robust error handling** using patterns from `restore_env_settings.sh`
+- ✅ **Safe JSON parsing** with fallback mechanisms
+- ✅ **Rate limiting protection** with exponential backoff
+- ✅ **Authentication validation** with clear error messages
+- ✅ **Timeout protection** (5-minute interactive timeout)
+
+### 🎯 **Interactive Mode**
+- ✅ **y/n/list/skip options** for complete control
+- ✅ **Dynamic catalog listing** - shows ALL available catalog applications from API
+- ✅ **Manual catalog selection** when auto-detection fails
+- ✅ **Real-time validation** of user inputs
+- ✅ **Skip problematic applications** without stopping the process
+
+### 📊 **Progress Tracking**
+- ✅ **Environment progress**: `🔍 [6/19] Processing environment: env-name`
+- ✅ **Application progress**: `[1/3] 🔧 Processing app: app-name`
+- ✅ **Real-time status updates** for all operations
+- ✅ **Comprehensive logging** with timestamps
+
+### 🧠 **Smart Pattern Matching**
+- ✅ **Exact name matching**
+- ✅ **Cluster prefix/suffix removal** (e.g., `app-cluster-name` → `app`)
+- ✅ **Version suffix removal** (e.g., `app-v1` → `app`)
+- ✅ **Timestamp removal** (e.g., `app-20250710123456` → `app`)
+- ✅ **Case-insensitive matching**
+- ✅ **Fuzzy matching** as fallback
+- ✅ **Prefix pattern removal** (e.g., `app-` prefix)
+
+## 📋 Prerequisites
+
+- Bash shell environment
 - `curl` command-line tool
-- `jq` JSON processor
-- Nirmata API access token
-- Source and target cluster information
+- `jq` JSON processor (v1.6+)
+- Valid Nirmata API access token
+- Source and destination cluster access
 
-## Usage
+## 🚀 Usage
 
-```bash
-./update_catalog_references.sh <api_endpoint> <token> <source_cluster> <target_cluster>
-```
-
-### Parameters
-
-- `api_endpoint`: The Nirmata API endpoint (e.g., https://pe420.nirmata.co)
-- `token`: Your Nirmata API token
-- `source_cluster`: The source cluster name (e.g., 123-app-migration)
-- `target_cluster`: The target cluster name (e.g., 129-app-migration)
-
-### Example
+### Main Script (Recommended)
 
 ```bash
-./update_catalog_references.sh https://pe420.nirmata.co YOUR_TOKEN 123-app-migration 129-app-migration
+./update_catalog_references_fixed_api.sh <api_endpoint> <token> <source_cluster> <destination_cluster> [OPTIONS]
 ```
 
-## Error Handling
+### Options
 
-The script includes comprehensive error handling:
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Show what would be done without making changes (DEFAULT) |
+| `--interactive` | Review and confirm each mapping before applying |
+| `--auto` | Run automatically without prompts |
 
-1. **Authentication Errors (401)**
-   - Validates token at startup
-   - Provides clear error messages for authentication failures
+### Examples
 
-2. **Permission Errors (403)**
-   - Checks access rights
-   - Logs detailed permission-related issues
+#### 1. **Interactive Mode (Recommended)**
+```bash
+./update_catalog_references_fixed_api.sh https://staging.nirmata.co 'YOUR_TOKEN' 'conformance-132' 'another-rhel9' --interactive
+```
 
-3. **Resource Not Found (404)**
-   - Handles missing resources gracefully
-   - Provides specific error messages for missing applications
+#### 2. **Dry Run Preview**
+```bash
+./update_catalog_references_fixed_api.sh https://staging.nirmata.co 'YOUR_TOKEN' 'conformance-132' 'another-rhel9' --dry-run
+```
 
-4. **Rate Limiting (429)**
-   - Implements exponential backoff
-   - Automatically retries after waiting
+#### 3. **Automatic Mode**
+```bash
+./update_catalog_references_fixed_api.sh https://staging.nirmata.co 'YOUR_TOKEN' 'conformance-132' 'another-rhel9' --auto
+```
 
-5. **Server Errors (500, 502, 503, 504)**
-   - Retries with increasing delays
-   - Maximum of 3 retry attempts
+### Cross-Environment Mapping (Velero Scenarios)
 
-## Logging
+```bash
+./update_catalog_references_cross_env_mapping.sh https://staging.nirmata.co 'YOUR_TOKEN' 'source-cluster' 'dest-cluster' --interactive
+```
 
-- Logs are stored in the `logs` directory
-- Each run creates a timestamped log file
-- Log format: `catalog_reference_update_YYYYMMDD_HHMMSS.log`
-- Includes detailed information about:
-  - Authentication status
-  - Environment processing
-  - Application updates
-  - Errors and retries
-  - Success/failure counts
+## 🎯 Interactive Experience
 
-## Output
+When using `--interactive` mode, you'll see:
 
-The script provides:
-- Real-time progress updates
-- Success/failure counts
-- List of failed applications
-- Detailed error messages
-- Summary report at completion
+```
+🔍 [4/19] Processing environment: nirmata-another-rhel9
+   📱 Found 1 applications in this environment
+      [1/1] 🔧 Processing app: nirmata
 
-## Troubleshooting
+🔍 APPLICATION: nirmata (Environment: nirmata-another-rhel9)
+No automatic catalog match found.
 
-1. **Authentication Issues**
-   - Verify your API token is valid
-   - Check token permissions
-   - Ensure token is properly formatted
+Available catalog applications:
+  - best-practices
+  - dolis-git
+  - gitlab-madhu-ngnx
+  - kyverno
+  - new-nginx
+  - nginx-ingress
+  - prometheus
+  ... (95+ total applications)
 
-2. **Missing Catalog Applications**
-   - Verify catalog applications exist
-   - Check naming patterns
-   - Ensure proper cluster configuration
+Enter catalog application name for 'nirmata' (or 'skip' to skip): kyverno
+✅ Mapping confirmed: nirmata → kyverno
+```
 
-3. **Update Failures**
-   - Check application permissions
-   - Verify API endpoint accessibility
-   - Review log files for specific errors
+### Interactive Options
 
-## Support
+| Input | Action |
+|-------|--------|
+| `kyverno` | Map application to 'kyverno' catalog |
+| `skip` | Skip this application |
+| `[Enter]` | Skip (empty input) |
+| ⏰ *Timeout* | Auto-skip after 5 minutes |
 
-For issues or questions:
-1. Check the log files in the `logs` directory
-2. Review error messages in the console output
-3. Contact Nirmata support with the log file reference 
+## 📊 Output and Logging
+
+### Real-time Output
+```
+🔧 FIXED Catalog Reference Update (Proper API Method)
+[2025-07-11 13:53:22] [🎯 INTERACTIVE] Authentication successful
+[2025-07-11 13:53:22] [🎯 INTERACTIVE] Found 19 environments in destination cluster
+
+🔍 [1/19] Processing environment: default-another-rhel9
+   ℹ️  No applications found in environment: default-another-rhel9
+
+🔍 [6/19] Processing environment: another-rhel9-ritu-nginx
+   📱 Found 1 applications in this environment
+      [1/1] 🔧 Processing app: ritu-nginx
+   🔗 Manual mapping: ritu-nginx → new-nginx
+   ✅ Mapping confirmed: ritu-nginx → new-nginx
+```
+
+### Final Summary
+```
+========================================
+🔧 FINAL SUMMARY (Fixed API Method)
+========================================
+Linked applications: 2
+Fixed wrong references: 1
+Failed operations: 0
+Total processed: 3
+========================================
+```
+
+### Log Files
+- **Location**: `logs/` directory
+- **Format**: `catalog_reference_fixed_CLUSTER_to_CLUSTER_TIMESTAMP.log`
+- **Content**: Detailed API calls, responses, errors, and decisions
+
+## 🛡️ Error Handling
+
+### Authentication Errors
+```
+[ERROR] Authentication failed. HTTP code: 401
+Please check your token and permissions.
+```
+
+### API Rate Limiting
+```
+Rate limited, waiting 15 seconds before retry...
+```
+
+### Invalid Catalog Selection
+```
+❌ Catalog 'invalid-name' not found. Skipping app-name
+Available catalogs: [shows current list]
+```
+
+### JSON Parsing Errors
+- **Automatic fallback** to safe defaults
+- **Error suppression** with `/dev/null` redirection
+- **Graceful degradation** when APIs return unexpected data
+
+## 🔍 Troubleshooting
+
+### Script Hangs at Interactive Prompt
+✅ **Fixed**: 5-minute timeout protection automatically skips
+
+### No Catalog Applications Listed
+- ✅ **Fixed**: Dynamic API retrieval shows 95+ real catalog apps
+- ✅ **Fallback**: Shows error message if API fails
+
+### JSON Parsing Errors
+- ✅ **Fixed**: Robust error handling prevents crashes
+- ✅ **Safe extraction**: All JSON operations use error-safe methods
+
+### Authentication Issues
+1. Verify API token format and validity
+2. Check token permissions for environments and catalog APIs
+3. Ensure correct API endpoint URL
+
+### Missing Environment Applications
+- Script automatically handles empty environments
+- Logs show clear "No applications found" messages
+- Continues processing remaining environments
+
+## 📈 Performance Optimizations
+
+- **Efficient API calls**: Batch operations where possible
+- **Progress feedback**: Real-time status without overwhelming output
+- **Smart caching**: Catalog applications retrieved once per run
+- **Parallel-safe**: Handles multiple concurrent operations safely
+
+## 🔧 Advanced Usage
+
+### Custom Pattern Matching
+The script automatically tries these patterns in order:
+1. **Exact match**: `app-name` → `app-name`
+2. **Cluster removal**: `app-name-cluster` → `app-name`  
+3. **Version removal**: `app-name-v1` → `app-name`
+4. **Timestamp removal**: `app-name-20250710` → `app-name`
+5. **Prefix removal**: `app-app-name` → `app-name`
+6. **Fuzzy matching**: Contains substring
+7. **Interactive fallback**: Manual selection
+
+### Validation and Verification
+- **Pre-flight checks**: Validates clusters and authentication
+- **Real-time verification**: Confirms each catalog reference update
+- **Post-update validation**: Ensures changes were applied correctly
+
+## 🆘 Support
+
+### Log Analysis
+```bash
+# View latest log
+cat logs/catalog_reference_fixed_*_$(date +%Y%m%d)*.log | tail -50
+
+# Check for errors
+grep "ERROR" logs/catalog_reference_fixed_*.log
+
+# View summary
+grep "FINAL SUMMARY" logs/catalog_reference_fixed_*.log
+```
+
+### Common Issues and Solutions
+
+| Issue | Solution |
+|-------|----------|
+| Script hangs | ✅ **Fixed**: Automatic timeout protection |
+| Missing catalogs | ✅ **Fixed**: Dynamic API retrieval |
+| JSON errors | ✅ **Fixed**: Robust error handling |
+| Auth failures | Check token and permissions |
+| API rate limits | ✅ **Fixed**: Automatic retry with backoff |
+
+For additional support, provide:
+1. **Log file** from the `logs/` directory
+2. **Error message** from console output
+3. **API endpoint** and cluster names used
+4. **Script version** and parameters used
+
+---
+
+## 🎉 Recent Improvements (v2.0)
+
+- ✅ **Interactive mode** with y/n/list/skip options  
+- ✅ **Dynamic catalog listing** from live API
+- ✅ **Enhanced error handling** using production patterns
+- ✅ **Progress indicators** for better UX
+- ✅ **Timeout protection** prevents hanging
+- ✅ **Safe JSON parsing** with fallback mechanisms
+- ✅ **Real-time feedback** during operations
+- ✅ **Comprehensive pattern matching** for auto-detection
+- ✅ **Cross-environment support** for Velero scenarios 
