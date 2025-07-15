@@ -577,7 +577,7 @@ find_dest_environment() {
     fi
     
     # Strategy 1: Exact match
-    local dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$source_env_name" '.[] | select(.cluster[].id == $cluster and .name == $name)')
+    local dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$source_env_name" '.[] | select(.cluster[0].id == $cluster and .name == $name)')
     
     if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
         log_message "Found exact match: $source_env_name" >&2
@@ -620,7 +620,7 @@ find_dest_environment() {
     # Try multiple destination patterns
     
     # Pattern A: exact namespace match
-    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$namespace" '.[] | select(.cluster[].id == $cluster and .name == $name)')
+    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$namespace" '.[] | select(.cluster[0].id == $cluster and .name == $name)')
     if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
         log_message "Found namespace-only match: $namespace" >&2
         echo "$dest_env"
@@ -629,7 +629,7 @@ find_dest_environment() {
     
     # Pattern B: destcluster-namespace
     local dest_pattern="$DEST_CLUSTER-$namespace"
-    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$dest_pattern" '.[] | select(.cluster[].id == $cluster and .name == $name)')
+    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$dest_pattern" '.[] | select(.cluster[0].id == $cluster and .name == $name)')
     if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
         log_message "Found cluster-prefix match: $dest_pattern" >&2
         echo "$dest_env"
@@ -638,7 +638,7 @@ find_dest_environment() {
     
     # Pattern C: namespace-destcluster
     dest_pattern="$namespace-$DEST_CLUSTER"
-    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$dest_pattern" '.[] | select(.cluster[].id == $cluster and .name == $name)')
+    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$dest_pattern" '.[] | select(.cluster[0].id == $cluster and .name == $name)')
     if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
         log_message "Found cluster-suffix match: $dest_pattern" >&2
         echo "$dest_env"
@@ -647,7 +647,7 @@ find_dest_environment() {
     
     # Pattern D: Case-insensitive versions
     dest_pattern="$dest_cluster_lower-$namespace"
-    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$dest_pattern" '.[] | select(.cluster[].id == $cluster and .name == $name)')
+    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$dest_pattern" '.[] | select(.cluster[0].id == $cluster and .name == $name)')
     if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
         log_message "Found case-insensitive cluster-prefix match: $dest_pattern" >&2
         echo "$dest_env"
@@ -655,7 +655,7 @@ find_dest_environment() {
     fi
     
     dest_pattern="$namespace-$dest_cluster_lower"
-    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$dest_pattern" '.[] | select(.cluster[].id == $cluster and .name == $name)')
+    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$dest_pattern" '.[] | select(.cluster[0].id == $cluster and .name == $name)')
     if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
         log_message "Found case-insensitive cluster-suffix match: $dest_pattern" >&2
         echo "$dest_env"
@@ -666,7 +666,7 @@ find_dest_environment() {
     # Convert "name-conformance-132" to "name-old-app-migration"
     dest_pattern=$(echo "$source_env_name" | sed "s/-$SOURCE_CLUSTER$/-$DEST_CLUSTER/")
     if [ "$dest_pattern" != "$source_env_name" ]; then
-        dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$dest_pattern" '.[] | select(.cluster[].id == $cluster and .name == $name)')
+        dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$dest_pattern" '.[] | select(.cluster[0].id == $cluster and .name == $name)')
         if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
             log_message "Found migration pattern match: $dest_pattern" >&2
             echo "$dest_env"
@@ -675,7 +675,7 @@ find_dest_environment() {
     fi
     
     # Strategy 4: Fuzzy matching - contains the namespace
-    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg pattern "$namespace" '.[] | select(.cluster[].id == $cluster and (.name | contains($pattern)))')
+    dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg pattern "$namespace" '.[] | select(.cluster[0].id == $cluster and (.name | contains($pattern)))')
     if [ ! -z "$dest_env" ] && [ "$dest_env" != "null" ]; then
         local matched_name=$(echo "$dest_env" | jq -r '.name')
         log_message "Found fuzzy match containing '$namespace': $matched_name" >&2
@@ -690,7 +690,7 @@ find_dest_environment() {
     
     # Fixed: Better error handling for jq parsing
     local env_list
-    env_list=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" '.[] | select(.cluster[].id == $cluster) | .name' 2>/dev/null | head -10)
+    env_list=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" '.[] | select(.cluster[0].id == $cluster) | .name' 2>/dev/null | head -10)
     
     if [ $? -eq 0 ] && [ ! -z "$env_list" ]; then
         echo "$env_list" | while read -r env_name; do
@@ -1059,24 +1059,24 @@ EOF
             fi
             
             # STEP 2: Add source ACLs with proper team mapping
-            # Get access control IDs
+        # Get access control IDs
             ACCESS_CONTROL_IDS=$(echo "$SOURCE_ACL_DETAILS" | jq -r '.accessControls[].id' 2>/dev/null)
-            
-            # Process each access control
-            for control_id in $ACCESS_CONTROL_IDS; do
+        
+        # Process each access control
+        for control_id in $ACCESS_CONTROL_IDS; do
                 if [ ! -z "$control_id" ] && [ "$control_id" != "null" ]; then
-                    # Get access control details from source
+            # Get access control details from source
                     CONTROL_DETAILS=$(make_api_call "GET" "${SOURCE_API_ENDPOINT}/environments/api/accessControls/$control_id" "${SOURCE_TOKEN}" "" "access control details")
                     if [ $? -ne 0 ]; then
                         log_message "WARNING: Failed to get access control details for $control_id"
                         continue
                     fi
-                    
+            
                     ENTITY_ID=$(safe_json_extract "$CONTROL_DETAILS" '.entityId' "")
                     ENTITY_TYPE=$(safe_json_extract "$CONTROL_DETAILS" '.entityType' "")
                     PERMISSION=$(safe_json_extract "$CONTROL_DETAILS" '.permission' "")
                     ENTITY_NAME=$(safe_json_extract "$CONTROL_DETAILS" '.entityName' "")
-                
+            
                     if [ "$ENTITY_TYPE" = "team" ] && [ ! -z "$ENTITY_ID" ] && [ ! -z "$PERMISSION" ] && [ ! -z "$ENTITY_NAME" ]; then
                         log_message "Mapping team $ENTITY_NAME from source ID $ENTITY_ID to destination cluster"
                         
@@ -1238,9 +1238,9 @@ EOF
                             echo "$resource_count $copied_count $skipped_count" > "$temp_results"
                             continue
                         fi
-                        ;;
-                esac
-                
+                            ;;
+                    esac
+                    
                 if [ "$DRY_RUN" = false ]; then
                     # Clean up resource for copying (remove status, resourceVersion, etc.)
                     CLEAN_RESOURCE=$(echo "$resource" | jq '
@@ -1461,7 +1461,7 @@ if [ "$INTERACTIVE_MODE" = true ] && [ "$DRY_RUN" = false ]; then
                     fi
                     
                     # Validate the custom destination environment exists
-                    local custom_dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$custom_dest_name" '.[] | select(.cluster[].id == $cluster and .name == $name)')
+                    custom_dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$custom_dest_name" '.[] | select(.cluster[0].id == $cluster and .name == $name)')
                     
                     if [ ! -z "$custom_dest_env" ] && [ "$custom_dest_env" != "null" ]; then
                         echo "✅ Manual mapping: $source_env_name → $custom_dest_name"
@@ -1499,7 +1499,7 @@ if [ "$INTERACTIVE_MODE" = true ] && [ "$DRY_RUN" = false ]; then
                             echo "❌ Mapping rejected. Please specify the correct destination environment."
                             echo ""
                             echo "Available destination environments:"
-                            echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" '.[] | select(.cluster[].id == $cluster) | .name' | sort | head -20 | sed 's/^/  - /'
+                            echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" '.[] | select(.cluster[0].id == $cluster) | .name' | sort | head -20 | sed 's/^/  - /'
                             echo ""
                             
                             while true; do
@@ -1513,7 +1513,7 @@ if [ "$INTERACTIVE_MODE" = true ] && [ "$DRY_RUN" = false ]; then
                                 fi
                                 
                                 # Validate the custom destination environment exists
-                                local custom_dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$custom_dest_name" '.[] | select(.cluster[].id == $cluster and .name == $name)')
+                                custom_dest_env=$(echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" --arg name "$custom_dest_name" '.[] | select(.cluster[0].id == $cluster and .name == $name)')
                                 
                                 if [ ! -z "$custom_dest_env" ] && [ "$custom_dest_env" != "null" ]; then
                                     echo "✅ Custom mapping confirmed: $source_env_name → $custom_dest_name"
@@ -1529,7 +1529,7 @@ if [ "$INTERACTIVE_MODE" = true ] && [ "$DRY_RUN" = false ]; then
                         [Ll][Ii][Ss][Tt]|"list"|"LIST")
                             echo ""
                             echo "📋 Available destination environments in cluster '$DEST_CLUSTER':"
-                            echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" '.[] | select(.cluster[].id == $cluster) | .name' | sort | head -20 | sed 's/^/  - /'
+                            echo "$DEST_ENVIRONMENTS_RESPONSE" | jq -r --arg cluster "$DEST_CLUSTER_ID" '.[] | select(.cluster[0].id == $cluster) | .name' | sort | head -20 | sed 's/^/  - /'
                             echo ""
                             # Continue the loop to ask again
                             ;;
@@ -1549,34 +1549,34 @@ if [ "$INTERACTIVE_MODE" = true ] && [ "$DRY_RUN" = false ]; then
     # Clean up temporary file
     rm -f "$temp_env_file"
 else
-    log_message "🔍 Building environment mapping preview..."
-    echo ""
-    echo "🗺️  ENVIRONMENT MAPPING PREVIEW"
-    echo "================================"
+log_message "🔍 Building environment mapping preview..."
+echo ""
+echo "🗺️  ENVIRONMENT MAPPING PREVIEW"
+echo "================================"
 
-    while read -r source_env_data; do
-        if [ -n "$source_env_data" ]; then
-            source_env_name=$(echo "$source_env_data" | jq -r '.name')
+while read -r source_env_data; do
+    if [ -n "$source_env_data" ]; then
+        source_env_name=$(echo "$source_env_data" | jq -r '.name')
             
             # Skip system namespaces
             if is_system_namespace "$source_env_name"; then
                 echo "⏭️  Skipping system namespace: $source_env_name"
                 continue
             fi
-            
-            # Find corresponding destination environment
+        
+        # Find corresponding destination environment
             dest_env_data=$(find_dest_environment "$source_env_name")
-            
-            if [ -z "$dest_env_data" ]; then
-                echo "❌ $source_env_name -> NO MATCH FOUND"
-                MAPPING_ERRORS+=("$source_env_name")
-            else
+        
+        if [ -z "$dest_env_data" ]; then
+            echo "❌ $source_env_name -> NO MATCH FOUND"
+            MAPPING_ERRORS+=("$source_env_name")
+        else
                 dest_env_name=$(echo "$dest_env_data" | jq -r '.name')
-                echo "✅ $source_env_name -> $dest_env_name"
-                MAPPING_PREVIEW+=("$source_env_name|$dest_env_name")
-            fi
+            echo "✅ $source_env_name -> $dest_env_name"
+            MAPPING_PREVIEW+=("$source_env_name|$dest_env_name")
         fi
-    done < <(echo "$SOURCE_ENVIRONMENTS" | jq -c '.')
+    fi
+done < <(echo "$SOURCE_ENVIRONMENTS" | jq -c '.')
 fi
 
 echo ""
@@ -1644,7 +1644,7 @@ elif [ "$INTERACTIVE_MODE" = true ] && [ "$DRY_RUN" = false ]; then
     
     echo "📋 CONFIRMED 1:1 ENVIRONMENT MAPPINGS:"
     echo "======================================"
-    local mapping_counter=1
+    mapping_counter=1
     for mapping in "${MAPPING_PREVIEW[@]}"; do
         IFS='|' read -r source_env dest_env <<< "$mapping"
         printf "%2d. %-35s → %s\n" "$mapping_counter" "$source_env" "$dest_env"
