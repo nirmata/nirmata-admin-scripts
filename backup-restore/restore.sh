@@ -38,7 +38,7 @@ touch /tmp/restore-status.txt
 backupfolder=$1
 
 # Get the list of all databases
-mongodbs="Activity-nirmata Availability-cluster-hc-nirmata Availability-env-app-nirmata Catalog-nirmata Cluster-nirmata Config-nirmata Environments-nirmata Users-nirmata TimeSeries-nirmata"
+mongodbs="Activity-nirmata Availability-cluster-hc-nirmata Availability-env-app-nirmata Catalog-nirmata Cluster-nirmata Config-nirmata Environments-nirmata Users-nirmata"
 #mongodbs="Activity-nirmata"
 #mongodbs="Availability-cluster-hc-nirmata"
 #mongodbs="Availability-env-app-nirmata"
