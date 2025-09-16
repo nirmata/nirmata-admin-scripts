@@ -1,9 +1,0 @@
-Environment Name,Environment ID,Applications Count,Catalog Name,Catalog ID,Catalog Apps Count,Mapping Status,Notes
-default-n4k-rollout,fa13988e-a99b-4a09-ab7f-13bb69e3deb2,0,default,0fc130c9-8fad-47c6-a377-e3c4e7c6b95e,0,Potential Match,Environment name similar to catalog name (default)
-kube-node-lease-n4k-rollout,193b3437-668a-442f-b4cd-de0630de447a,0,kube-node-lease,1f214d6f-6730-468c-987a-732264189c36,0,Potential Match,Environment name similar to catalog name (kube-node-lease)
-kube-system-n4k-rollout,0ee3a491-bc4c-4441-a113-959405d4a601,0,kube-system,ff48fd16-b718-4ac1-8fbb-eef9bd92a15f,0,Potential Match,Environment name similar to catalog name (kube-system)
-nirmata-n4k-rollout,25deecc8-69fc-479f-92f8-627233e18f23,1,nirmata,72cf930f-53f9-4950-93cd-3b315aba3239,0,Potential Match,Environment name similar to catalog name (nirmata)
-kube-public-n4k-rollout,6a6c3cce-4ab7-4707-a18f-498fd4f39061,0,kube-public,7198b7fa-533e-4fc6-89d8-baac4a476b66,0,Potential Match,Environment name similar to catalog name (kube-public)
-ingress-haproxy-n4k-rollout,5c697c17-2ea0-4ecb-b01f-66547fc21ef1,0,ingress-haproxy,8e53f1df-c752-4184-b53d-0289fce2c92f,0,Potential Match,Environment name similar to catalog name (ingress-haproxy)
-kyverno,54517c97-0b70-40c3-bcaa-28d768c42a2a,1,N/A,N/A,N/A,Needs Review,Possible matches found: kyverno-n4k
-nirmata-system,080c090e-890d-4980-993b-049e920be48e,1,N/A,N/A,N/A,No Match,No matching catalog found
