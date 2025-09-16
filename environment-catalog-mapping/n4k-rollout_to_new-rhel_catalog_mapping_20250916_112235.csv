@@ -1,0 +1,6 @@
+Source Environment,Source Env ID,Source Apps,Catalog Name,Catalog ID,Catalog Apps,Dest Environment,Dest Env ID,Dest Apps,Mapping Action,Manual Steps
+nirmata-n4k-rollout,25deecc8-69fc-479f-92f8-627233e18f23,1,nirmata,72cf930f-53f9-4950-93cd-3b315aba3239,0,nirmata-new-rhel,cbf27a2d-05cc-4242-8cf6-8450b3b4043a,1,LINK_CATALOG,Use Catalog ID 72cf930f-53f9-4950-93cd-3b315aba3239 to link to Dest Env ID cbf27a2d-05cc-4242-8cf6-8450b3b4043a
+nirmata-n4k-rollout,25deecc8-69fc-479f-92f8-627233e18f23,1,nirmata,72cf930f-53f9-4950-93cd-3b315aba3239,0,nirmata-new-rhel,cbf27a2d-05cc-4242-8cf6-8450b3b4043a,1,LINK_CATALOG,Use Catalog ID 72cf930f-53f9-4950-93cd-3b315aba3239 to link to Dest Env ID cbf27a2d-05cc-4242-8cf6-8450b3b4043a
+nirmata-n4k-rollout,25deecc8-69fc-479f-92f8-627233e18f23,1,N/A,N/A,N/A,nirmata-new-rhel,cbf27a2d-05cc-4242-8cf6-8450b3b4043a,1,NO_CATALOG_FOUND,No matching catalog found. Check if catalog exists or needs to be created for nirmata
+kyverno,54517c97-0b70-40c3-bcaa-28d768c42a2a,1,N/A,N/A,N/A,NOT_FOUND,N/A,N/A,NO_DEST_ENV_NO_CATALOG,Create destination environment and find/create appropriate catalog
+nirmata-system,080c090e-890d-4980-993b-049e920be48e,1,N/A,N/A,N/A,NOT_FOUND,N/A,N/A,NO_DEST_ENV_NO_CATALOG,Create destination environment and find/create appropriate catalog

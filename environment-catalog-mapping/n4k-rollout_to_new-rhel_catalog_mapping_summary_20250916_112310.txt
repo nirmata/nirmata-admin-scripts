@@ -1,0 +1,42 @@
+Cross-Cluster Catalog Mapping Summary
+====================================
+Source Cluster: n4k-rollout
+Destination Cluster: new-rhel
+Generated: Tue Sep 16 11:23:10 IST 2025
+API Endpoint: https://pe420.nirmata.co
+
+Summary Statistics:
+------------------
+Total Environment Mappings: 5
+Ready to Link Catalog: 2
+Need to Create Dest Environment First: 0
+0
+No Catalog Found: 1
+No Destination Environment or Catalog: 2
+
+Action Items:
+------------
+1. LINK_CATALOG: Use the Catalog ID and Dest Env ID to create manual links
+2. CREATE_ENV_FIRST: Create the destination environment, then link catalog
+3. NO_CATALOG_FOUND: Find or create appropriate catalogs for these environments
+4. NO_DEST_ENV_NO_CATALOG: Complete manual setup required
+
+Files Generated:
+---------------
+- Detailed mapping: n4k-rollout_to_new-rhel_catalog_mapping_20250916_112235.csv
+- Summary report: n4k-rollout_to_new-rhel_catalog_mapping_summary_20250916_112310.txt
+
+Manual Linking Steps:
+-------------------
+For LINK_CATALOG entries:
+1. Use the Catalog ID from the CSV
+2. Use the Dest Env ID from the CSV  
+3. Create the catalog-to-environment link using Nirmata API or UI
+4. Verify the link is established correctly
+
+Example API Call for Manual Linking:
+curl -X POST "https://pe420.nirmata.co/catalog/api/catalogs/{CATALOG_ID}/environments" \
+  -H "Authorization: NIRMATA-API S1MbxQVas1lPYJs3sHZUSW5UXwTdytv7dJm2jsr51CCpz/1H6YQZuSGqtDvPK6n8elS3CQIAe/U+yGxg6ngOvYCwzXv98SRriSplF7OmPmw=" \
+  -H "Content-Type: application/json" \
+  -d '{"environmentId": "{DEST_ENV_ID}"}'
+
