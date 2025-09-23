@@ -1,0 +1,144 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-migration-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-migration-2
+---
+# Test Deployment in namespace 1
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-app-deployment
+  namespace: test-migration-1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+    spec:
+      containers:
+      - name: app
+        image: docker-repo.nibr.novartis.net/nirmata/pause:3.6
+        ports:
+        - containerPort: 8080
+      - name: sidecar
+        image: docker-repo.nibr.novartis.net/nirmata/nginx:1.21
+        ports:
+        - containerPort: 80
+      initContainers:
+      - name: init-container
+        image: docker-repo.nibr.novartis.net/nirmata/busybox:1.35
+        command: ['sh', '-c', 'echo "Init completed"']
+---
+# Test StatefulSet in namespace 1
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: test-statefulset
+  namespace: test-migration-1
+spec:
+  serviceName: test-statefulset
+  replicas: 2
+  selector:
+    matchLabels:
+      app: test-statefulset
+  template:
+    metadata:
+      labels:
+        app: test-statefulset
+    spec:
+      containers:
+      - name: main
+        image: docker-repo.nibr.novartis.net/nirmata/pause:3.6
+        ports:
+        - containerPort: 8080
+---
+# Test DaemonSet in namespace 2
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: test-daemonset
+  namespace: test-migration-2
+spec:
+  selector:
+    matchLabels:
+      app: test-daemonset
+  template:
+    metadata:
+      labels:
+        app: test-daemonset
+    spec:
+      containers:
+      - name: daemon
+        image: docker-repo.nibr.novartis.net/nirmata/pause:3.6
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+# Test CronJob in namespace 2
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: test-cronjob
+  namespace: test-migration-2
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cron-task
+            image: docker-repo.nibr.novartis.net/nirmata/pause:3.6
+            command:
+            - /bin/sh
+            - -c
+            - echo "Cron job executed"
+          restartPolicy: OnFailure
+---
+# Test Pod with existing imagePullSecrets in namespace 1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-with-secret
+  namespace: test-migration-1
+spec:
+  containers:
+  - name: app
+    image: docker-repo.nibr.novartis.net/nirmata/pause:3.6
+  imagePullSecrets:
+  - name: existing-secret
+---
+# Test Pod without imagePullSecrets in namespace 2
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-no-secret
+  namespace: test-migration-2
+spec:
+  containers:
+  - name: app
+    image: docker-repo.nibr.novartis.net/nirmata/pause:3.6
+---
+# Service for testing (should not be affected by migration)
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-service
+  namespace: test-migration-1
+spec:
+  selector:
+    app: test-app
+  ports:
+  - port: 80
+    targetPort: 8080
