@@ -24,12 +24,49 @@ A comprehensive bash script for migrating container images in Kubernetes cluster
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd kubernetes-image-migration
+git clone https://github.com/nirmata/nirmata-admin-scripts.git
+cd nirmata-admin-scripts/kubernetes-image-migration
 
 # Make scripts executable
 chmod +x k8s-image-migration.sh
 chmod +x k8s-image-rollback.sh
+chmod +x tests/*.sh
+```
+
+## ⚡ Quick Setup
+
+### 1. Create ImagePullSecret
+```bash
+# For JFrog Artifactory (most common)
+kubectl create secret docker-registry artifactory-secret \
+  --docker-server=your-artifactory-server.com \
+  --docker-username=your-username \
+  --docker-password=your-password-or-token \
+  --namespace=your-target-namespace
+
+# For GitHub Container Registry
+kubectl create secret docker-registry ghcr-secret \
+  --docker-server=ghcr.io \
+  --docker-username=your-github-username \
+  --docker-password=your-github-token \
+  --namespace=your-target-namespace
+```
+
+### 2. Run Your First Migration
+```bash
+# Always start with a dry-run
+./k8s-image-migration.sh --dry-run \
+  --namespace your-namespace \
+  --source-registry old-registry.company.net \
+  --dest-registry new-registry.company.net \
+  --output-csv migration-plan.csv
+
+# Review the plan, then execute
+./k8s-image-migration.sh \
+  --namespace your-namespace \
+  --source-registry old-registry.company.net \
+  --dest-registry new-registry.company.net \
+  --output-csv migration-executed.csv
 ```
 
 ## 📖 Usage
@@ -203,13 +240,31 @@ Review each migration individually:
 
 The repository includes comprehensive test suites:
 
+### Setting Up Tests
+Before running tests, update the test files with your actual credentials:
+
+1. **Update test-suite.sh**:
+   ```bash
+   # Replace YOUR_GITHUB_TOKEN with your actual GitHub Personal Access Token
+   sed -i 's/YOUR_GITHUB_TOKEN/your_actual_github_token/g' tests/test-suite.sh
+   ```
+
+2. **Update test-rollback.sh**:
+   ```bash
+   # Replace YOUR_GITHUB_TOKEN with your actual GitHub Personal Access Token  
+   sed -i 's/YOUR_GITHUB_TOKEN/your_actual_github_token/g' tests/test-rollback.sh
+   ```
+
+### Running Tests
 ```bash
 # Run migration tests
-./test-suite.sh
+./tests/test-suite.sh
 
 # Run rollback tests
-./test-rollback.sh
+./tests/test-rollback.sh
 ```
+
+**Security Note**: Never commit files with real tokens to version control. The test files use placeholder values for security.
 
 ## 📚 Documentation
 
@@ -237,21 +292,51 @@ The script automatically:
 
 ### Creating ImagePullSecrets
 
+Before running the migration, you need to create imagePullSecrets in your target namespaces:
+
+#### For JFrog Artifactory
 ```bash
-# Create imagePullSecret for Docker registry
+# Create imagePullSecret for JFrog Artifactory (default name: artifactory-secret)
+kubectl create secret docker-registry artifactory-secret \
+  --docker-server=artifactory.company.net \
+  --docker-username=<your-username> \
+  --docker-password=<your-password-or-token> \
+  --namespace=<target-namespace>
+```
+
+#### For GitHub Container Registry
+```bash
+# Create imagePullSecret for GitHub Container Registry
+kubectl create secret docker-registry ghcr-secret \
+  --docker-server=ghcr.io \
+  --docker-username=<github-username> \
+  --docker-password=<github-personal-access-token> \
+  --namespace=<target-namespace>
+```
+
+#### For Other Docker Registries
+```bash
+# Create imagePullSecret for any Docker registry
 kubectl create secret docker-registry my-registry-secret \
   --docker-server=registry.company.net \
   --docker-username=<username> \
   --docker-password=<password> \
   --namespace=<target-namespace>
-
-# Create imagePullSecret for GitHub Container Registry
-kubectl create secret docker-registry ghcr-secret \
-  --docker-server=ghcr.io \
-  --docker-username=<github-username> \
-  --docker-password=<github-token> \
-  --namespace=<target-namespace>
 ```
+
+#### Apply to Multiple Namespaces
+```bash
+# Create the same secret across multiple namespaces
+for ns in development staging production; do
+  kubectl create secret docker-registry artifactory-secret \
+    --docker-server=artifactory.company.net \
+    --docker-username=<your-username> \
+    --docker-password=<your-token> \
+    --namespace=$ns
+done
+```
+
+**Note**: Replace `<your-username>`, `<your-password-or-token>`, and `<target-namespace>` with your actual values.
 
 ## ⚠️ Important Notes
 

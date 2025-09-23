@@ -24,14 +24,21 @@ Production-ready Kubernetes container image migration tool with comprehensive fe
 ```bash
 cd kubernetes-image-migration
 
-# Dry-run migration
+# 1. Create imagePullSecret first
+kubectl create secret docker-registry artifactory-secret \
+  --docker-server=your-registry.company.net \
+  --docker-username=your-username \
+  --docker-password=your-password \
+  --namespace=production
+
+# 2. Run dry-run migration
 ./k8s-image-migration.sh --dry-run \
   --namespace production \
   --source-registry old-registry.company.net \
   --dest-registry new-registry.company.net \
   --output-csv migration-audit.csv
 
-# Execute migration
+# 3. Execute migration after reviewing the plan
 ./k8s-image-migration.sh \
   --namespace production \
   --source-registry old-registry.company.net \
