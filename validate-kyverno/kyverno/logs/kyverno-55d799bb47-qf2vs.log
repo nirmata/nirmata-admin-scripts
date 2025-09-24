@@ -1,0 +1,30 @@
+I0531 09:13:31.784620       1 version.go:17] setup/version "msg"="version" "hash"="/8480fe7f679dd80ae43d2586b19244acc7d97f82" "time"="2023-03-28_10:16:17AM" "version"="v1.9.2-n4k.nirmata.1"
+I0531 09:13:31.784664       1 maxprocs.go:12] setup/maxprocs "msg"="setup maxprocs..." 
+I0531 09:13:31.785407       1 maxprocs.go:16] setup/maxprocs "msg"="maxprocs: Leaving GOMAXPROCS=8: CPU quota undefined" 
+I0531 09:13:31.785468       1 client.go:37] setup/kube-client "msg"="create kube client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:31.786134       1 signal.go:16] setup/signals "msg"="setup signals..." 
+I0531 09:13:31.786518       1 metrics.go:25] setup/metrics "msg"="setup metrics..." "collector"="opentelemetrycollector.kyverno.svc.cluster.local" "creds"="" "otel"="prometheus" "port"="8000"
+I0531 09:13:31.786558       1 metrics.go:17] setup/metrics "msg"="load metrics configuration..." 
+I0531 09:13:31.795090       1 client.go:37] setup/kube-client "msg"="create kube client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:31.795520       1 client.go:37] setup/kube-client "msg"="create kube client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:31.795941       1 client.go:45] setup/kyverno-client "msg"="create kyverno client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:31.796092       1 client.go:61] setup/metadata-client "msg"="create metadata client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:31.796199       1 client.go:53] setup/dynamic-client "msg"="create dynamic client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:32.130829       1 main.go:74] setup/registry-client "msg"="setup registry client..." "insecure"=false "secrets"=""
+I0531 09:13:32.131050       1 main.go:90] setup/cosign "msg"="setup cosign..." "repository"=""
+I0531 09:13:33.031634       1 controller.go:32] setup/controllers "msg"="starting controller" "name"="policycache-controller" "workers"=3
+I0531 09:13:33.031670       1 controller.go:32] setup/controllers "msg"="starting controller" "name"="openapi-controller" "workers"=1
+I0531 09:13:33.031711       1 controller.go:32] setup/controllers "msg"="starting controller" "name"="config-controller" "workers"=3
+I0531 09:13:33.031746       1 controller.go:119] EventGenerator "msg"="start" 
+I0531 09:13:33.031835       1 leaderelection.go:248] attempting to acquire leader lease kyverno/kyverno...
+I0531 09:13:33.041573       1 leaderelection.go:99] setup/leader-election "msg"="another instance has been elected as leader" "id"="kyverno-55d799bb47-qf2vs" "leader"="kyverno-55d799bb47-4t24s"
+I0531 09:13:33.132188       1 server.go:195] webhooks "msg"="starting service" 
+I0601 04:01:19.395482       1 log.go:153] webhooks/server "msg"="2023/06/01 04:01:19 http: TLS handshake error from 10.14.1.10:34330: EOF" 
+I0601 06:01:19.356709       1 log.go:153] webhooks/server "msg"="2023/06/01 06:01:19 http: TLS handshake error from 10.14.1.10:51436: EOF" 
+I0601 14:02:32.315383       1 log.go:153] webhooks/server "msg"="2023/06/01 14:02:32 http: TLS handshake error from 10.14.1.10:47902: EOF" 
+I0602 10:02:29.115749       1 log.go:153] webhooks/server "msg"="2023/06/02 10:02:29 http: TLS handshake error from 10.14.1.10:60514: EOF" 
+I0603 10:01:17.951662       1 log.go:153] webhooks/server "msg"="2023/06/03 10:01:17 http: TLS handshake error from 10.14.1.10:35298: EOF" 
+I0604 20:01:19.205076       1 log.go:153] webhooks/server "msg"="2023/06/04 20:01:19 http: TLS handshake error from 10.14.1.10:35920: read tcp 10.14.2.166:9443->10.14.1.10:35920: read: connection reset by peer" 
+I0604 22:01:19.005934       1 log.go:153] webhooks/server "msg"="2023/06/04 22:01:19 http: TLS handshake error from 10.14.1.10:57158: EOF" 
+I0605 15:16:07.679296       1 log.go:153] webhooks/server "msg"="2023/06/05 15:16:07 http: TLS handshake error from 10.14.1.10:43978: EOF" 
+I0605 18:01:17.859100       1 log.go:153] webhooks/server "msg"="2023/06/05 18:01:17 http: TLS handshake error from 10.14.1.10:35784: EOF" 

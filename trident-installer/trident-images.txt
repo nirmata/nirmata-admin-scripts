@@ -1,0 +1,8 @@
+ghcr.io/nirmata/trident-operator:25.02.0
+ghcr.io/nirmata/trident:25.02.0
+ghcr.io/nirmata/trident-autosupport:25.02
+ghcr.io/nirmata/csi-node-driver-registrar:v2.13.0
+ghcr.io/nirmata/csi-attacher:v4.7.0
+ghcr.io/nirmata/csi-provisioner:v5.1.0
+ghcr.io/nirmata/csi-resizer:v1.12.0
+ghcr.io/nirmata/csi-snapshotter:v8.2.0 

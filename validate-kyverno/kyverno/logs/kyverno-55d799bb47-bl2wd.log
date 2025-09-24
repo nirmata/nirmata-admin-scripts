@@ -1,0 +1,38 @@
+I0531 09:13:20.246797       1 version.go:17] setup/version "msg"="version" "hash"="/8480fe7f679dd80ae43d2586b19244acc7d97f82" "time"="2023-03-28_10:16:17AM" "version"="v1.9.2-n4k.nirmata.1"
+I0531 09:13:20.246904       1 maxprocs.go:12] setup/maxprocs "msg"="setup maxprocs..." 
+I0531 09:13:20.247491       1 maxprocs.go:16] setup/maxprocs "msg"="maxprocs: Leaving GOMAXPROCS=8: CPU quota undefined" 
+I0531 09:13:20.247533       1 client.go:37] setup/kube-client "msg"="create kube client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:20.247989       1 signal.go:16] setup/signals "msg"="setup signals..." 
+I0531 09:13:20.248270       1 metrics.go:25] setup/metrics "msg"="setup metrics..." "collector"="opentelemetrycollector.kyverno.svc.cluster.local" "creds"="" "otel"="prometheus" "port"="8000"
+I0531 09:13:20.248304       1 metrics.go:17] setup/metrics "msg"="load metrics configuration..." 
+I0531 09:13:20.260517       1 client.go:37] setup/kube-client "msg"="create kube client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:20.260998       1 client.go:37] setup/kube-client "msg"="create kube client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:20.261358       1 client.go:45] setup/kyverno-client "msg"="create kyverno client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:20.261559       1 client.go:61] setup/metadata-client "msg"="create metadata client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:20.261706       1 client.go:53] setup/dynamic-client "msg"="create dynamic client..." "burst"=300 "kubeconfig"="" "qps"=300
+I0531 09:13:20.583226       1 main.go:74] setup/registry-client "msg"="setup registry client..." "insecure"=false "secrets"=""
+I0531 09:13:20.583268       1 main.go:90] setup/cosign "msg"="setup cosign..." "repository"=""
+I0531 09:13:21.276704       1 controller.go:119] EventGenerator "msg"="start" 
+I0531 09:13:21.276739       1 controller.go:32] setup/controllers "msg"="starting controller" "name"="openapi-controller" "workers"=1
+I0531 09:13:21.276794       1 controller.go:32] setup/controllers "msg"="starting controller" "name"="policycache-controller" "workers"=3
+I0531 09:13:21.276815       1 controller.go:32] setup/controllers "msg"="starting controller" "name"="config-controller" "workers"=3
+I0531 09:13:21.276954       1 leaderelection.go:248] attempting to acquire leader lease kyverno/kyverno...
+I0531 09:13:21.283408       1 leaderelection.go:99] setup/leader-election "msg"="another instance has been elected as leader" "id"="kyverno-55d799bb47-bl2wd" "leader"="kyverno-55d799bb47-4t24s"
+I0531 09:13:21.378338       1 server.go:195] webhooks "msg"="starting service" 
+I0531 14:02:28.353533       1 log.go:153] webhooks/server "msg"="2023/05/31 14:02:28 http: TLS handshake error from 10.14.1.10:52902: EOF" 
+I0601 02:02:29.692519       1 log.go:153] webhooks/server "msg"="2023/06/01 02:02:29 http: TLS handshake error from 10.14.1.10:54952: EOF" 
+I0601 16:01:21.347412       1 log.go:153] webhooks/server "msg"="2023/06/01 16:01:21 http: TLS handshake error from 10.14.1.10:49234: EOF" 
+I0601 22:01:17.745082       1 log.go:153] webhooks/server "msg"="2023/06/01 22:01:17 http: TLS handshake error from 10.14.1.10:40686: EOF" 
+I0602 04:20:58.530474       1 log.go:153] webhooks/server "msg"="2023/06/02 04:20:58 http: TLS handshake error from 10.14.1.10:34416: EOF" 
+I0602 04:26:42.867589       1 log.go:153] webhooks/server "msg"="2023/06/02 04:26:42 http: TLS handshake error from 10.14.1.10:55182: read tcp 10.14.1.247:9443->10.14.1.10:55182: read: connection reset by peer" 
+I0602 18:01:15.641335       1 log.go:153] webhooks/server "msg"="2023/06/02 18:01:15 http: TLS handshake error from 10.14.1.10:35284: EOF" 
+I0602 20:02:32.619604       1 log.go:153] webhooks/server "msg"="2023/06/02 20:02:32 http: TLS handshake error from 10.14.1.10:54856: EOF" 
+I0603 06:02:27.922432       1 log.go:153] webhooks/server "msg"="2023/06/03 06:02:27 http: TLS handshake error from 10.14.1.10:55218: EOF" 
+I0603 22:01:10.907348       1 log.go:153] webhooks/server "msg"="2023/06/03 22:01:10 http: TLS handshake error from 10.14.1.10:33146: EOF" 
+I0603 22:02:21.849056       1 log.go:153] webhooks/server "msg"="2023/06/03 22:02:21 http: TLS handshake error from 10.14.1.10:34342: EOF" 
+I0604 02:01:19.675662       1 log.go:153] webhooks/server "msg"="2023/06/04 02:01:19 http: TLS handshake error from 10.14.1.10:50184: EOF" 
+I0604 02:02:30.309214       1 log.go:153] webhooks/server "msg"="2023/06/04 02:02:30 http: TLS handshake error from 10.14.1.10:59660: EOF" 
+I0604 16:01:08.223544       1 log.go:153] webhooks/server "msg"="2023/06/04 16:01:08 http: TLS handshake error from 10.14.1.10:40754: EOF" 
+I0605 18:40:42.939635       1 log.go:153] webhooks/server "msg"="2023/06/05 18:40:42 http: TLS handshake error from 10.14.1.10:40114: EOF" 
+I0605 18:41:03.624449       1 log.go:153] webhooks/server "msg"="2023/06/05 18:41:03 http: TLS handshake error from 10.14.1.10:46898: EOF" 
+I0606 08:01:20.400931       1 log.go:153] webhooks/server "msg"="2023/06/06 08:01:20 http: TLS handshake error from 10.14.1.10:34312: EOF" 

@@ -1,0 +1,64 @@
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Large binary files
+tridentctl
+extras/bin/trident
+extras/macos/bin/tridentctl
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor and IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Test artifacts
+test-results/
+coverage/
+
+# Kubernetes test files
+*.kubeconfig
+kubeconfig*
+
+# Helm generated files
+charts/*.tgz
+
+# Terraform files
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Docker files
+.dockerignore
+
+# Local development
+.env
+.env.local
+local-*
+
+# Backup files
+*.bak
+*.backup
+
+# Archive files (except helm charts)
+*.tar.gz
+*.zip
+!helm/*.tgz 
