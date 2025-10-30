@@ -1,0 +1,15 @@
+# Generated MongoDB count files
+mongodb_counts_*.txt
+source.txt
+dest.txt
+
+# Reports directory
+reports/
+
+# Logs directory
+logs/
+*.log
+
+# Temporary files
+*.tmp
+
